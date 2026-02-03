@@ -19,20 +19,20 @@ export const SearchBar: React.FC<SearchBarProps> = ({ className, placeholder = '
     <form
       onSubmit={handleSubmit}
       className={cn(
-        'bg-white/90 shadow-xl rounded-full flex items-center px-6 py-3 w-full max-w-xl',
+        'glass-secondary shadow-xl rounded-full flex items-center px-6 py-2 w-full max-w-xl text-white',
         className
       )}
     >
       <input
         type="text"
-        className="flex-1 bg-transparent outline-none text-lg px-2"
+        className="flex-1 bg-transparent outline-none text-lg px-2 text-white placeholder:text-white/70"
         placeholder={placeholder}
         value={value}
         onChange={e => setValue(e.target.value)}
       />
       <button
         type="submit"
-        className="ml-4 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
+        className="ml-4 px-6 py-2 rounded-full bg-hero-gradient text-white font-semibold transition-colors hover:brightness-110"
       >
         Search
       </button>

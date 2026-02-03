@@ -10,11 +10,13 @@ const App: React.FC = () => {
   return (
     <ModalProvider>
       <div className="min-h-screen flex flex-col bg-white">
-        <NavBar
-          active={active}
-          onActiveChange={setActive}
-        />
-        <HeroSection />
+        <div className="relative">
+          <NavBar
+            active={active}
+            onActiveChange={setActive}
+          />
+          <HeroSection />
+        </div>
         <GlobalModal onModeChange={setActive} />
       </div>
     </ModalProvider>

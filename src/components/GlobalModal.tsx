@@ -73,14 +73,14 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onAuthSubmit, onModeCh
       role="presentation"
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative"
+        className="glass-secondary rounded-2xl shadow-2xl p-8 w-full max-w-md relative text-white"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-modal-title"
       >
         <button
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold"
+          className="absolute top-3 right-3 text-white/70 hover:text-white text-2xl font-bold"
           onClick={closeModal}
           aria-label="Close"
         >
@@ -89,7 +89,7 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onAuthSubmit, onModeCh
         <h2 className="text-2xl font-semibold mb-2 text-center" id="auth-modal-title">
           {isSignup ? 'Create your account' : 'Welcome back'}
         </h2>
-        <p className="text-sm text-gray-500 mb-6 text-center">
+        <p className="text-sm text-white/80 mb-6 text-center">
           {isSignup ? 'Start planning your next journey in minutes.' : 'Sign in to continue exploring.'}
         </p>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -99,7 +99,7 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onAuthSubmit, onModeCh
               placeholder="Full name"
               value={formState.fullName}
               onChange={handleChange('fullName')}
-              className="border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="rounded px-4 py-2 bg-white/15 border border-white/30 text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
               required
             />
           )}
@@ -108,7 +108,7 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onAuthSubmit, onModeCh
             placeholder="Email address"
             value={formState.email}
             onChange={handleChange('email')}
-            className="border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="rounded px-4 py-2 bg-white/15 border border-white/30 text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
             required
           />
           <input
@@ -116,7 +116,7 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onAuthSubmit, onModeCh
             placeholder="Password"
             value={formState.password}
             onChange={handleChange('password')}
-            className="border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="rounded px-4 py-2 bg-white/15 border border-white/30 text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
             required
           />
           {isSignup && (
@@ -125,23 +125,23 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onAuthSubmit, onModeCh
               placeholder="Confirm password"
               value={formState.confirmPassword}
               onChange={handleChange('confirmPassword')}
-              className="border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="rounded px-4 py-2 bg-white/15 border border-white/30 text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
               required
             />
           )}
           {!isSignup && (
-            <label className="flex items-center gap-2 text-sm text-gray-600">
+            <label className="flex items-center gap-2 text-sm text-white/80">
               <input
                 type="checkbox"
                 checked={formState.remember}
                 onChange={handleChange('remember')}
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-white/40 bg-white/20"
               />
               Remember me
             </label>
           )}
           {formError && (
-            <div className="text-sm text-red-500 bg-red-50 border border-red-100 rounded px-3 py-2">
+            <div className="text-sm text-red-200 bg-red-500/20 border border-red-200/30 rounded px-3 py-2">
               {formError}
             </div>
           )}
@@ -157,7 +157,7 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onAuthSubmit, onModeCh
               onModeChange?.(nextMode);
               openModal(nextMode);
             }}
-            className="text-sm text-blue-600 hover:text-blue-700"
+            className="text-sm text-white"
           >
             {switchLabel}
           </button>
