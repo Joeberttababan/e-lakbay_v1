@@ -11,6 +11,7 @@ import {
 
 interface GlobalModalProps {
   onAuthSubmit?: (payload: unknown, mode: AuthMode) => void | Promise<void>;
+  onModeChange?: (mode: AuthMode) => void;
 }
 
 const initialFormState: AuthFormState = {
@@ -21,7 +22,7 @@ const initialFormState: AuthFormState = {
   remember: false,
 };
 
-export const GlobalModal: React.FC<GlobalModalProps> = ({ onAuthSubmit }) => {
+export const GlobalModal: React.FC<GlobalModalProps> = ({ onAuthSubmit, onModeChange }) => {
   const { open, type, closeModal, openModal } = useModal();
   const [formState, setFormState] = useState<AuthFormState>(initialFormState);
   const [formError, setFormError] = useState<string | null>(null);
@@ -151,7 +152,11 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onAuthSubmit }) => {
         <div className="mt-5 text-center">
           <button
             type="button"
-            onClick={() => openModal(isSignup ? 'login' : 'signup')}
+            onClick={() => {
+              const nextMode = isSignup ? 'login' : 'signup';
+              onModeChange?.(nextMode);
+              openModal(nextMode);
+            }}
             className="text-sm text-blue-600 hover:text-blue-700"
           >
             {switchLabel}

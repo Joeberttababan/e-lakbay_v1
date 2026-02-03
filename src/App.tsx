@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { NavBar } from './components/NavBar';
 import { HeroSection } from './components/HeroSection';
-import { SearchBar } from './components/SearchBar';
 import { ModalProvider } from './components/ModalContext';
 import { GlobalModal } from './components/GlobalModal';
 
@@ -15,10 +14,8 @@ const App: React.FC = () => {
           active={active}
           onActiveChange={setActive}
         />
-        <HeroSection>
-          <SearchBar />
-        </HeroSection>
-        <GlobalModal />
+        <HeroSection />
+        <GlobalModal onModeChange={setActive} />
       </div>
     </ModalProvider>
   );

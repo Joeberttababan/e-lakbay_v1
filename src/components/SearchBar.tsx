@@ -19,7 +19,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ className, placeholder = '
     <form
       onSubmit={handleSubmit}
       className={cn(
-        'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 shadow-xl rounded-full flex items-center px-6 py-3 w-full max-w-xl',
+        'bg-white/90 shadow-xl rounded-full flex items-center px-6 py-3 w-full max-w-xl',
         className
       )}
     >
