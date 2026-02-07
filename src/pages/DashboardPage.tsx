@@ -6,12 +6,14 @@ import { DestinationSection } from '../sections/DestinationSection';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { ProductUploadModal } from '../components/ProductUploadModal';
 import { DestinationUploadModal } from '../components/DestinationUploadModal';
+import { useAuth } from '../components/AuthProvider';
 
 interface DashboardPageProps {
   profile: Profile | null;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ profile }) => {
+  const { user } = useAuth();
   const displayName = profile?.full_name || profile?.email || 'Traveler';
   const battleCry = profile?.battle_cry || 'Ready for the next adventure.';
   const [isProductOpen, setIsProductOpen] = useState(false);
@@ -30,8 +32,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ profile }) => {
 
         <div className="flex-1">
           <AnalyticsSection displayName={displayName} />
-          <ProductSection />
-          <DestinationSection />
+          <ProductSection userId={user?.id ?? profile?.id ?? null} />
+          <DestinationSection userId={user?.id ?? profile?.id ?? null} />
         </div>
       </div>
 

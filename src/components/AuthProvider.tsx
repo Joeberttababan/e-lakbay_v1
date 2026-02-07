@@ -61,7 +61,6 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const shouldClearAuthCache = import.meta.env.VITE_CLEAR_AUTH_CACHE === 'true';
 
   const hydrateSession = useCallback(async () => {
     setLoading(true);
@@ -102,37 +101,34 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
   useEffect(() => {
     const initialize = async () => {
-      if (shouldClearAuthCache) {
-        try {
-          await supabase.auth.signOut();
-        } catch (error) {
-          console.error('Failed to clear auth cache:', error);
-        }
-      }
-
       await hydrateSession();
     };
 
     initialize();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setLoading(true);
-      const sessionUser = session?.user ?? null;
-      setUser(sessionUser);
-
-      if (sessionUser) {
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      (async () => {
         try {
-          const profileData = await fetchProfileWithRetry(sessionUser.id);
-          setProfile(profileData ?? null);
-        } catch (error) {
-          console.error('Failed to load profile:', error);
-          setProfile(null);
-        }
-      } else {
-        setProfile(null);
-      }
+          const sessionUser = session?.user ?? null;
+          setUser(sessionUser);
 
-      setLoading(false);
+          if (sessionUser) {
+            try {
+              const profileData = await fetchProfileWithRetry(sessionUser.id);
+              setProfile(profileData ?? null);
+            } catch (error) {
+              console.error('Failed to load profile:', error);
+              setProfile(null);
+            }
+          } else {
+            setProfile(null);
+          }
+        } catch (error) {
+          console.error('Failed to handle auth change:', error);
+        } finally {
+          setLoading(false);
+        }
+      })();
     });
 
     return () => {

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useAuth } from './AuthProvider';
 
 interface DestinationUploadModalProps {
   open: boolean;
@@ -34,6 +35,7 @@ const uploadImages = async (files: File[], folder: string) => {
 };
 
 export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ open, onClose }) => {
+  const { user } = useAuth();
   const [destinationName, setDestinationName] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
@@ -120,6 +122,7 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
         destination_name: destinationName.trim(),
         description: combinedDescription || null,
         image_url: imageUrls[0] ?? null,
+        user_id: user?.id ?? null,
       };
 
       const payloadWithArray = {

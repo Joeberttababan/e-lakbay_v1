@@ -1,32 +1,94 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { DestinationCard } from '../components/DestinationCard';
+import { supabase } from '../lib/supabaseClient';
 
 interface DestinationSectionProps {
   onRate?: (name: string) => void;
+  userId?: string | null;
+}
+interface DestinationItem {
+  id: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  createdAt: string | null;
+  ratingAvg?: number;
+  ratingCount?: number;
 }
 
-const destinations = [
-  {
-    name: 'San Vicente Cove',
-    municipality: 'San Vicente',
-    description: 'A serene coastal escape with turquoise waters and golden sunsets.',
-    imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
-    postedBy: 'Tourism Office',
-    ratingAvg: 4.8,
-    ratingCount: 203,
-  },
-  {
-    name: 'Tagudin Trail',
-    municipality: 'Tagudin',
-    description: 'A lush mountain trail perfect for sunrise treks and panoramic views.',
-    imageUrl: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=600&q=80',
-    postedBy: 'Municipal Staff',
-    ratingAvg: 4.5,
-    ratingCount: 156,
-  },
-];
+export const DestinationSection: React.FC<DestinationSectionProps> = ({ onRate, userId }) => {
+  const [destinations, setDestinations] = useState<DestinationItem[]>([]);
 
-export const DestinationSection: React.FC<DestinationSectionProps> = ({ onRate }) => {
+  useEffect(() => {
+    const loadDestinations = async () => {
+      try {
+        let query = supabase
+          .from('destinations')
+          .select('id, destination_name, description, image_url, image_urls, created_at')
+          .order('created_at', { ascending: false });
+
+        if (userId) {
+          query = query.eq('user_id', userId);
+        }
+
+        let { data: destinationRows, error: destinationError } = await query;
+
+        if (destinationError && userId && destinationError.message.toLowerCase().includes('user_id')) {
+          const retry = await supabase
+            .from('destinations')
+            .select('id, destination_name, description, image_url, image_urls, created_at')
+            .order('created_at', { ascending: false });
+          destinationRows = retry.data ?? [];
+          destinationError = retry.error ?? null;
+        }
+
+        if (destinationError) {
+          throw destinationError;
+        }
+
+        const { data: ratingRows, error: ratingError } = await supabase
+          .from('destination_ratings')
+          .select('destination_id, rating');
+
+        if (ratingError) {
+          throw ratingError;
+        }
+
+        const ratingMap = new Map<string, { total: number; count: number }>();
+        (ratingRows ?? []).forEach((row) => {
+          const current = ratingMap.get(row.destination_id) ?? { total: 0, count: 0 };
+          ratingMap.set(row.destination_id, {
+            total: current.total + (row.rating ?? 0),
+            count: current.count + 1,
+          });
+        });
+
+        const mapped = (destinationRows ?? []).map((row) => {
+          const rating = ratingMap.get(row.id);
+          const ratingAvg = rating && rating.count > 0 ? rating.total / rating.count : undefined;
+          const imageUrls = (row as { image_urls?: string[] }).image_urls ?? [];
+          return {
+            id: row.id,
+            name: row.destination_name,
+            description: row.description ?? null,
+            imageUrl: imageUrls[0] ?? row.image_url ?? null,
+            createdAt: row.created_at ?? null,
+            ratingAvg,
+            ratingCount: rating?.count,
+          } as DestinationItem;
+        });
+
+        setDestinations(mapped);
+      } catch (error) {
+        console.error('Failed to load destinations:', error);
+      }
+    };
+
+    loadDestinations();
+  }, [userId]);
+
+  const visibleDestinations = useMemo(() => destinations.filter((item) => item.imageUrl), [destinations]);
+
   return (
     <section id="destinations" className="mt-10">
       <div className="flex items-center justify-between mb-4">
@@ -36,14 +98,14 @@ export const DestinationSection: React.FC<DestinationSectionProps> = ({ onRate }
         </div>
       </div>
       <div className="flex flex-col gap-4">
-        {destinations.map((destination) => (
+        {visibleDestinations.map((destination) => (
           <DestinationCard
-            key={destination.name}
+            key={destination.id}
             title={destination.name}
-            meta={`Municipality: ${destination.municipality}`}
-            description={destination.description}
-            imageUrl={destination.imageUrl}
-            postedBy={destination.postedBy}
+            meta="Uploaded destination"
+            description={destination.description ?? ''}
+            imageUrl={destination.imageUrl ?? ''}
+            postedBy="You"
             ratingAvg={destination.ratingAvg}
             ratingCount={destination.ratingCount}
             onRate={onRate ? () => onRate(destination.name) : undefined}
