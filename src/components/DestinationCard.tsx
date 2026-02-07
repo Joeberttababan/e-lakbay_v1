@@ -41,6 +41,7 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
   }, [imageUrl, imageUrls]);
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const handlePrev = () => {
     setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
@@ -76,7 +77,7 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
 
   return (
     <article className="glass-secondary border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col gap-5">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2 text-sm text-white/70">
           <span className="h-7 w-7 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-xs font-semibold">
             {postedBy.charAt(0).toUpperCase()}
@@ -86,32 +87,42 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
         {meta && <span className="text-xs text-white/50">{meta}</span>}
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-5">
         <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-white/10">
           <img
             src={images[activeIndex]}
             alt={title}
-            className="h-64 sm:h-72 md:h-80 w-full object-cover"
+            className="h-56 sm:h-72 lg:h-80 w-full object-cover"
           />
           {images.length > 1 && (
             <>
               <button
                 type="button"
                 onClick={handlePrev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/40 border border-white/20 text-white flex items-center justify-center hover:bg-black/60 transition"
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center hover:bg-black/80 transition"
                 aria-label="Previous image"
               >
-                ◀
+                <span className="text-lg">‹</span>
               </button>
               <button
                 type="button"
                 onClick={handleNext}
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/40 border border-white/20 text-white flex items-center justify-center hover:bg-black/60 transition"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center hover:bg-black/80 transition"
                 aria-label="Next image"
               >
-                ▶
+                <span className="text-lg">›</span>
               </button>
             </>
+          )}
+          {images.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-black/40 px-3 py-1">
+              {images.map((_, index) => (
+                <span
+                  key={`dot-${index}`}
+                  className={`h-2 w-2 rounded-full ${index === activeIndex ? 'bg-white' : 'bg-white/40'}`}
+                />
+              ))}
+            </div>
           )}
         </div>
 
@@ -124,46 +135,66 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
             <span className="text-xs text-white/60">{todayLabel}</span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-7xl">☁️</div>
-            <div>
-              <div className="text-4xl font-bold">29°C</div>
-              <div className="text-sm text-white/60">Clouds</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 text-sm text-white/70">
-            <div className="flex items-center gap-1">
-              <span className="text-2xl">💧</span>
-              <span>Humidity 78%</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-2xl">💨</span>
-              <span>Wind 12 km/h</span>
-            </div>
-          </div>
-
-          <div className="mt-2">
-            <p className="text-xs uppercase tracking-wide text-white/50 mb-2">Forecast</p>
-            <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
-              {forecastDays.map((day, index) => (
-                <div
-                  key={`${day.label}-${index}`}
-                  className="min-w-[120px] rounded-xl border border-white/10 bg-white/5 p-3 flex flex-col gap-1"
-                >
-                  <span className="text-xs text-white/60">{day.label}</span>
-                  <span className="text-lg">{day.icon}</span>
-                  <span className="text-sm font-semibold">{day.temp}</span>
-                  <span className="text-xs text-white/50">{day.condition}</span>
+          <div className={`${detailsOpen ? 'block' : 'hidden'} lg:block`}>
+            <>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="text-4xl sm:text-7xl">☁️</div>
+                <div>
+                  <div className="text-2xl sm:text-4xl font-bold">29°C</div>
+                  <div className="text-sm text-white/60">Clouds</div>
                 </div>
-              ))}
-            </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-white/70">
+                <div className="flex items-center gap-1">
+                  <span className="text-xl sm:text-2xl">💧</span>
+                  <span>Humidity 78%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xl sm:text-2xl">💨</span>
+                  <span>Wind 12 km/h</span>
+                </div>
+              </div>
+
+              <div className="mt-2">
+                <p className="text-xs uppercase tracking-wide text-white/50 mb-2">Forecast</p>
+                <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                  {forecastDays.map((day, index) => (
+                    <div
+                      key={`${day.label}-${index}`}
+                      className="min-w-[120px] rounded-xl border border-white/10 bg-white/5 p-3 flex flex-col gap-1"
+                    >
+                      <span className="text-xs text-white/60">{day.label}</span>
+                      <span className="text-lg">{day.icon}</span>
+                      <span className="text-sm font-semibold">{day.temp}</span>
+                      <span className="text-xs text-white/50">{day.condition}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-3">
+      {!detailsOpen && (
+        <div className="flex items-center justify-between lg:hidden">
+          <div className="flex items-center gap-2 text-sm text-yellow-300">
+            <span>★</span>
+            <span className="text-white/70">{formatRating(ratingAvg, ratingCount)}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setDetailsOpen(true)}
+            className="text-sm font-semibold text-white/80 underline underline-offset-4 hover:text-white"
+          >
+            See more
+          </button>
+        </div>
+      )}
+
+      <div className={`flex flex-col gap-2 ${detailsOpen ? 'block' : 'hidden'} lg:block`}>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <h3 className="text-lg font-semibold">{title}</h3>
           <div className="flex items-center gap-2 text-sm text-yellow-300">
             <span>★</span>
@@ -171,7 +202,7 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
           </div>
         </div>
         <p className="text-sm text-white/70 leading-relaxed">{description}</p>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           {onRate ? (
             <button
               type="button"
@@ -190,6 +221,13 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
             View Routes
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => setDetailsOpen(false)}
+          className="text-xs text-white/60 underline underline-offset-4 hover:text-white lg:hidden"
+        >
+          See less
+        </button>
       </div>
     </article>
   );

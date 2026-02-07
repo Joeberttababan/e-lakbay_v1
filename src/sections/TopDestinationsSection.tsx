@@ -8,6 +8,7 @@ interface DestinationItem {
   name: string;
   description: string | null;
   imageUrl: string | null;
+  imageUrls: string[];
   createdAt: string | null;
   ratingAvg?: number;
   ratingCount?: number;
@@ -18,6 +19,7 @@ export const TopDestinationsSection: React.FC = () => {
   const [activeDestination, setActiveDestination] = useState<{
     name: string;
     imageUrl: string;
+    imageUrls?: string[];
     description?: string | null;
     ratingAvg?: number;
     ratingCount?: number;
@@ -62,6 +64,7 @@ export const TopDestinationsSection: React.FC = () => {
             name: row.destination_name,
             description: row.description ?? null,
             imageUrl: imageUrls[0] ?? row.image_url ?? null,
+            imageUrls,
             createdAt: row.created_at ?? null,
             ratingAvg,
             ratingCount: rating?.count,
@@ -112,6 +115,7 @@ export const TopDestinationsSection: React.FC = () => {
                   setActiveDestination({
                     name: destination.name,
                     imageUrl: destination.imageUrl ?? '',
+                    imageUrls: destination.imageUrls,
                     description: destination.description,
                     ratingAvg: destination.ratingAvg,
                     ratingCount: destination.ratingCount,
@@ -156,6 +160,7 @@ export const TopDestinationsSection: React.FC = () => {
               title={activeDestination.name}
               description={activeDestination.description || 'A featured destination from Ilocos Sur.'}
               imageUrl={activeDestination.imageUrl}
+              imageUrls={activeDestination.imageUrls}
               meta="Featured destination"
               postedBy="Tourism Office"
               ratingAvg={activeDestination.ratingAvg ?? 4.7}

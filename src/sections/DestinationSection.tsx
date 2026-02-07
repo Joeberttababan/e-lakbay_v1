@@ -11,6 +11,7 @@ interface DestinationItem {
   name: string;
   description: string | null;
   imageUrl: string | null;
+  imageUrls: string[];
   createdAt: string | null;
   ratingAvg?: number;
   ratingCount?: number;
@@ -72,6 +73,7 @@ export const DestinationSection: React.FC<DestinationSectionProps> = ({ onRate, 
             name: row.destination_name,
             description: row.description ?? null,
             imageUrl: imageUrls[0] ?? row.image_url ?? null,
+            imageUrls,
             createdAt: row.created_at ?? null,
             ratingAvg,
             ratingCount: rating?.count,
@@ -105,6 +107,7 @@ export const DestinationSection: React.FC<DestinationSectionProps> = ({ onRate, 
             meta="Uploaded destination"
             description={destination.description ?? ''}
             imageUrl={destination.imageUrl ?? ''}
+            imageUrls={destination.imageUrls}
             postedBy="You"
             ratingAvg={destination.ratingAvg}
             ratingCount={destination.ratingCount}

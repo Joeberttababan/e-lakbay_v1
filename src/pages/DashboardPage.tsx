@@ -26,6 +26,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ profile }) => {
           displayName={displayName}
           battleCry={battleCry}
           imgUrl={profile?.img_url}
+          userId={user?.id ?? profile?.id ?? null}
+          fullName={profile?.full_name ?? null}
           onOpenProductUpload={() => setIsProductOpen(true)}
           onOpenDestinationUpload={() => setIsDestinationOpen(true)}
         />
