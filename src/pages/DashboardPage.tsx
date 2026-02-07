@@ -4,7 +4,6 @@ import { AnalyticsSection } from '../sections/AnalyticsSection';
 import { ProductSection } from '../sections/ProductSection';
 import { DestinationSection } from '../sections/DestinationSection';
 import { DashboardSidebar } from '../components/DashboardSidebar';
-import { RatingModal } from '../components/RatingModal';
 
 interface DashboardPageProps {
   profile: Profile | null;
@@ -15,7 +14,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ profile }) => {
   const battleCry = profile?.battle_cry || 'Ready for the next adventure.';
   const [isProductOpen, setIsProductOpen] = useState(false);
   const [isDestinationOpen, setIsDestinationOpen] = useState(false);
-  const [ratingTarget, setRatingTarget] = useState<{ type: 'Product' | 'Destination'; name: string } | null>(null);
 
   return (
     <section className="min-h-screen bg-slate-950 text-white pt-24 pb-12 px-4 sm:px-6 lg:px-10">
@@ -30,8 +28,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ profile }) => {
 
         <div className="flex-1">
           <AnalyticsSection displayName={displayName} />
-          <ProductSection onRate={(name) => setRatingTarget({ type: 'Product', name })} />
-          <DestinationSection onRate={(name) => setRatingTarget({ type: 'Destination', name })} />
+          <ProductSection />
+          <DestinationSection />
         </div>
       </div>
 
@@ -239,12 +237,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ profile }) => {
         </div>
       )}
 
-      <RatingModal
-        open={Boolean(ratingTarget)}
-        title={ratingTarget ? `Rate ${ratingTarget.type}: ${ratingTarget.name}` : 'Rate'}
-        onClose={() => setRatingTarget(null)}
-        onSubmit={() => setRatingTarget(null)}
-      />
     </section>
   );
 };

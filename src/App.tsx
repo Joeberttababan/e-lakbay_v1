@@ -5,6 +5,7 @@ import { GlobalModal } from './components/GlobalModal';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import { DashboardPage } from './pages/DashboardPage';
 import { HomePage } from './pages/HomePage';
+import loadingVideo from './assets/Loading_chatbot.webm';
 
 const AppContent: React.FC = () => {
   const [active, setActive] = useState<'login' | 'signup'>('login');
@@ -18,14 +19,6 @@ const AppContent: React.FC = () => {
       setView('home');
     }
   }, [user]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        Loading...
-      </div>
-    );
-  }
 
   return (
     <ModalProvider>
@@ -44,6 +37,18 @@ const AppContent: React.FC = () => {
         </div>
         <GlobalModal onModeChange={setActive} />
       </div>
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <video
+            src={loadingVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="h-40 w-40 sm:h-52 sm:w-52"
+          />
+        </div>
+      )}
     </ModalProvider>
   );
 };

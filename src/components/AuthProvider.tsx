@@ -25,14 +25,36 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const fetchProfile = async (userId: string) => {
-  const { data, error } = await supabase
+  const { data, error, status } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', userId)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    const isNotFound = status === 406 || error.code === 'PGRST116';
+    if (isNotFound) return null;
+    throw error;
+  }
   return data as Profile;
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const fetchProfileWithRetry = async (userId: string, attempts = 4) => {
+  let lastError: unknown = null;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      const data = await fetchProfile(userId);
+      if (data) return data;
+      await sleep(250 * (i + 1));
+    } catch (error) {
+      lastError = error;
+      await sleep(250 * (i + 1));
+    }
+  }
+  if (lastError) throw lastError;
+  return null;
 };
 
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
@@ -60,8 +82,8 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
       if (sessionUser) {
         try {
-          const profileData = await fetchProfile(sessionUser.id);
-          setProfile(profileData);
+          const profileData = await fetchProfileWithRetry(sessionUser.id);
+          setProfile(profileData ?? null);
         } catch (error) {
           console.error('Failed to load profile:', error);
           setProfile(null);
@@ -94,13 +116,14 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     initialize();
 
     const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setLoading(true);
       const sessionUser = session?.user ?? null;
       setUser(sessionUser);
 
       if (sessionUser) {
         try {
-          const profileData = await fetchProfile(sessionUser.id);
-          setProfile(profileData);
+          const profileData = await fetchProfileWithRetry(sessionUser.id);
+          setProfile(profileData ?? null);
         } catch (error) {
           console.error('Failed to load profile:', error);
           setProfile(null);
@@ -120,8 +143,8 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const refreshProfile = useCallback(async () => {
     if (!user) return;
     try {
-      const profileData = await fetchProfile(user.id);
-      setProfile(profileData);
+      const profileData = await fetchProfileWithRetry(user.id);
+      setProfile(profileData ?? null);
     } catch (error) {
       console.error('Failed to refresh profile:', error);
     }
@@ -160,15 +183,29 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         });
 
       if (profileError) return profileError.message;
+
+      try {
+        const profileData = await fetchProfileWithRetry(userId);
+        setProfile(profileData ?? null);
+      } catch (profileLoadError) {
+        console.error('Failed to hydrate profile after signup:', profileLoadError);
+      }
     }
 
     return null;
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    setLoading(true);
     setUser(null);
     setProfile(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Failed to sign out:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const value = useMemo(
