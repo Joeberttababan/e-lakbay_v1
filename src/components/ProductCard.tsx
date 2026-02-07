@@ -30,16 +30,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onRate,
 }) => {
   return (
-    <article className="glass-secondary border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4">
-      <div className="h-36 w-full sm:h-40 sm:w-40 rounded-xl overflow-hidden border border-white/10 bg-white/10 shrink-0">
+    <article className="glass-secondary border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col h-[420px] overflow-hidden">
+      <div className="flex-[0_0_50%] min-h-[180px] rounded-xl overflow-hidden border border-white/10 bg-white/10">
         <img src={imageUrl} alt={title} className="h-full w-full object-cover" />
       </div>
-      <div className="flex-1 flex flex-col gap-3">
+      <div className="flex flex-1 flex-col gap-3 pt-4 min-h-0">
         <div>
           <h3 className="text-lg font-semibold">{title}</h3>
           {meta && <p className="text-xs text-white/60 mt-1">{meta}</p>}
         </div>
-        <p className="text-sm text-white/70 leading-relaxed">{description}</p>
+        <p className="text-sm text-white/70 leading-relaxed line-clamp-3">
+          {description}
+        </p>
         <div className="flex items-center gap-2 text-sm text-yellow-300">
           <span>★</span>
           <span className="text-white/70">{formatRating(ratingAvg, ratingCount)}</span>

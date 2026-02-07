@@ -125,27 +125,27 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="text-3xl">☁️</div>
+            <div className="text-7xl">☁️</div>
             <div>
-              <div className="text-2xl font-semibold">29°C</div>
+              <div className="text-4xl font-bold">29°C</div>
               <div className="text-sm text-white/60">Clouds</div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-sm text-white/70">
-            <div className="flex items-center gap-2">
-              <span>💧</span>
+            <div className="flex items-center gap-1">
+              <span className="text-2xl">💧</span>
               <span>Humidity 78%</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span>💨</span>
+            <div className="flex items-center gap-1">
+              <span className="text-2xl">💨</span>
               <span>Wind 12 km/h</span>
             </div>
           </div>
 
           <div className="mt-2">
             <p className="text-xs uppercase tracking-wide text-white/50 mb-2">Forecast</p>
-            <div className="flex gap-3 overflow-x-auto pb-2">
+            <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
               {forecastDays.map((day, index) => (
                 <div
                   key={`${day.label}-${index}`}
