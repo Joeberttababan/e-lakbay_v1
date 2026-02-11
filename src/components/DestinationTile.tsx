@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { DestinationModalCard } from './DestinationModalCard';
 
 interface DestinationTileProps {
   title: string;
   description: string;
   imageUrl: string;
+  imageUrls?: string[];
+  meta?: string;
+  postedBy?: string;
+  postedByImageUrl?: string | null;
   ratingAvg?: number;
   ratingCount?: number;
+  enableModal?: boolean;
+  onRate?: () => void;
   onClick?: () => void;
 }
 
@@ -23,10 +30,26 @@ export const DestinationTile: React.FC<DestinationTileProps> = ({
   title,
   description,
   imageUrl,
+  imageUrls,
+  meta,
+  postedBy,
+  postedByImageUrl,
   ratingAvg,
   ratingCount,
+  enableModal = false,
+  onRate,
   onClick,
 }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleTileClick = () => {
+    if (enableModal) {
+      setIsModalOpen(true);
+      return;
+    }
+    onClick?.();
+  };
+
   const content = (
     <article className="glass-secondary border border-white/10 rounded-2xl p-4 flex flex-col h-full">
       <div className="aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-white/10">
@@ -45,15 +68,45 @@ export const DestinationTile: React.FC<DestinationTileProps> = ({
     </article>
   );
 
-  if (onClick) {
+  if (enableModal || onClick) {
     return (
-      <button
-        type="button"
-        onClick={onClick}
-        className="text-left focus:outline-none focus:ring-2 focus:ring-white/30 rounded-2xl"
-      >
-        {content}
-      </button>
+      <>
+        <button
+          type="button"
+          onClick={handleTileClick}
+          className="text-left focus:outline-none focus:ring-2 focus:ring-white/30 rounded-2xl"
+        >
+          {content}
+        </button>
+        {enableModal && isModalOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+            role="presentation"
+            onClick={() => setIsModalOpen(false)}
+          >
+            <div
+              className="max-w-5xl w-full"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="destinations-modal"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <DestinationModalCard
+                title={title}
+                description={description}
+                imageUrl={imageUrl}
+                imageUrls={imageUrls}
+                meta={meta}
+                postedBy={postedBy}
+                postedByImageUrl={postedByImageUrl}
+                ratingAvg={ratingAvg}
+                ratingCount={ratingCount}
+                onRate={onRate}
+              />
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 

@@ -44,7 +44,7 @@ export const NavBar: React.FC<NavBarProps> = ({
   };
 
   return (
-    <nav className="absolute top-0 left-0 z-20 w-full flex items-center justify-between px-4 py-3 md:px-8 md:py-4 text-white pb-6 md:pb-8">
+    <nav className="absolute top-0 left-0 z-20 w-full flex items-center justify-between px-4 py-1 md:px-8 md:py-4 text-white">
       {/* Logo */}
       <button type="button" className="select-none" onClick={onHome} aria-label="Go to homepage">
         <img 

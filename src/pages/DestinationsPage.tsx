@@ -1,9 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { DestinationModalCard } from '../components/DestinationModalCard';
 import { DestinationTile } from '../components/DestinationTile';
 import { RatingModal } from '../components/RatingModal';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '../components/modern-ui/breadcrumb';
 
 interface DestinationsPageProps {
   onBackHome?: () => void;
@@ -24,7 +31,6 @@ interface DestinationItem {
 
 export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome }) => {
   const [destinations, setDestinations] = useState<DestinationItem[]>([]);
-  const [activeDestination, setActiveDestination] = useState<DestinationItem | null>(null);
   const [ratingTarget, setRatingTarget] = useState<{ name: string } | null>(null);
 
   useEffect(() => {
@@ -110,25 +116,38 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome }
   const visibleDestinations = useMemo(() => destinations.filter((item) => item.imageUrl), [destinations]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white pt-24 pb-12 px-4 sm:px-6 lg:px-10">
+    <main className="min-h-screen bg-slate-950 text-white pt-12 md:pt-20 pb-12 px-4 sm:px-6 lg:px-10">
       <div className="max-w-7xl mx-auto">
+        {onBackHome && (
+            <div className="flex justify-start">
+              <Breadcrumb className="my-2">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      onBackHome();
+                    }}
+                  >
+                    Home
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Destinations</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        )}
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
-            <p className="text-xs uppercase tracking-[0.35em] text-white/50">ILOCOS SUR</p>
             <h1 className="mt-2 text-3xl sm:text-4xl font-semibold">Destinations</h1>
             <p className="mt-2 text-sm text-white/70">
               Explore every destination shared by the community.
             </p>
           </div>
-          {onBackHome && (
-            <button
-              type="button"
-              onClick={onBackHome}
-              className="self-start sm:self-auto rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
-            >
-              Back to home
-            </button>
-          )}
         </div>
 
         <section className="mt-10">
@@ -139,43 +158,19 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome }
                 title={destination.name}
                 description={destination.description ?? 'A featured destination from Ilocos Sur.'}
                 imageUrl={destination.imageUrl ?? ''}
+                imageUrls={destination.imageUrls}
+                meta="Uploaded destination"
+                postedBy={destination.postedByName ?? 'Community'}
+                postedByImageUrl={destination.postedByImageUrl}
                 ratingAvg={destination.ratingAvg}
                 ratingCount={destination.ratingCount}
-                onClick={() => setActiveDestination(destination)}
+                enableModal
+                onRate={() => setRatingTarget({ name: destination.name })}
               />
             ))}
           </div>
         </section>
       </div>
-
-      {activeDestination && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
-          role="presentation"
-          onClick={() => setActiveDestination(null)}
-        >
-          <div
-            className="max-w-5xl w-full"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="destinations-modal"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <DestinationModalCard
-              title={activeDestination.name}
-              description={activeDestination.description || 'A featured destination from Ilocos Sur.'}
-              imageUrl={activeDestination.imageUrl ?? ''}
-              imageUrls={activeDestination.imageUrls}
-              meta="Uploaded destination"
-              postedBy={activeDestination.postedByName ?? 'Community'}
-              postedByImageUrl={activeDestination.postedByImageUrl}
-              ratingAvg={activeDestination.ratingAvg ?? 4.7}
-              ratingCount={activeDestination.ratingCount ?? 128}
-              onRate={() => setRatingTarget({ name: activeDestination.name })}
-            />
-          </div>
-        </div>
-      )}
 
       <RatingModal
         open={Boolean(ratingTarget)}

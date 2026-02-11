@@ -2,6 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { DestinationTile } from '../components/DestinationTile';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '../components/modern-ui/breadcrumb';
 
 interface ProfilePageProps {
   profileId: string;
@@ -21,6 +29,7 @@ interface DestinationItem {
   name: string;
   description: string | null;
   imageUrl: string | null;
+  imageUrls: string[];
   ratingAvg?: number;
   ratingCount?: number;
 }
@@ -97,6 +106,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
             name: row.destination_name,
             description: row.description ?? null,
             imageUrl: imageUrls[0] ?? row.image_url ?? null,
+            imageUrls,
             ratingAvg,
             ratingCount: rating?.count,
           } as DestinationItem;
@@ -116,9 +126,32 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
   const displayName = profile?.fullName || profile?.email || 'Traveler';
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white pt-24 pb-12 px-4 sm:px-6 lg:px-10">
+    <main className="min-h-screen bg-slate-950 text-white pt-12 md:pt-20 pb-12 px-4 sm:px-6 lg:px-10">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        {onBackHome && (
+          <div className="flex justify-start">
+            <Breadcrumb className="my-2">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      onBackHome();
+                    }}
+                  >
+                    Home
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Profile</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        )}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between mt-1 sm:mt-3 md:mt-5">
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border border-white/20 bg-white/10 overflow-hidden flex items-center justify-center text-lg font-semibold">
               {profile?.imageUrl ? (
@@ -132,15 +165,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
               {profile?.battleCry && <p className="text-sm text-white/70 mt-1">{profile.battleCry}</p>}
             </div>
           </div>
-          {onBackHome && (
-            <button
-              type="button"
-              onClick={onBackHome}
-              className="self-start sm:self-auto rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
-            >
-              Back to home
-            </button>
-          )}
         </div>
 
         <section className="mt-10">
@@ -155,8 +179,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
                 title={destination.name}
                 description={destination.description ?? 'A featured destination from Ilocos Sur.'}
                 imageUrl={destination.imageUrl ?? ''}
+                imageUrls={destination.imageUrls}
+                meta="Uploaded destination"
+                postedBy={displayName}
+                postedByImageUrl={profile?.imageUrl ?? null}
                 ratingAvg={destination.ratingAvg}
                 ratingCount={destination.ratingCount}
+                enableModal
               />
             ))}
           </div>
