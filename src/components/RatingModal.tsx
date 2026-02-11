@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface RatingModalProps {
   open: boolean;
@@ -84,7 +85,14 @@ export const RatingModal: React.FC<RatingModalProps> = ({ open, title, onClose, 
           <button
             type="button"
             className="rounded-full bg-white/10 border border-white/20 px-5 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
-            onClick={() => onSubmit?.(rating, comment)}
+            onClick={() => {
+              if (rating === 0) {
+                toast.error('Please select a rating first.');
+                return;
+              }
+              onSubmit?.(rating, comment);
+              toast.success('Thanks for your rating!');
+            }}
           >
             Submit Rating
           </button>

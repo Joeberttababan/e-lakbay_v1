@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthProvider';
+import { toast } from 'sonner';
 
 interface ProductUploadModalProps {
   open: boolean;
@@ -138,10 +139,12 @@ export const ProductUploadModal: React.FC<ProductUploadModalProps> = ({ open, on
         throw insertError;
       }
 
+      toast.success('Product uploaded successfully.');
       onClose();
     } catch (uploadError) {
       const message = uploadError instanceof Error ? uploadError.message : 'Upload failed. Please try again.';
       setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

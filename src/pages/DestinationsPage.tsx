@@ -3,6 +3,7 @@ import { DestinationModalCard } from '../components/DestinationModalCard';
 import { DestinationTile } from '../components/DestinationTile';
 import { RatingModal } from '../components/RatingModal';
 import { supabase } from '../lib/supabaseClient';
+import { toast } from 'sonner';
 
 interface DestinationsPageProps {
   onBackHome?: () => void;
@@ -99,6 +100,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome }
         setDestinations(mapped);
       } catch (error) {
         console.error('Failed to load destinations:', error);
+        toast.error('Failed to load destinations.');
       }
     };
 

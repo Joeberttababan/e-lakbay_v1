@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import type { User } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 
 export interface Profile {
   id: string;
@@ -85,6 +86,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
           setProfile(profileData ?? null);
         } catch (error) {
           console.error('Failed to load profile:', error);
+          toast.error('Failed to load your profile.');
           setProfile(null);
         }
       } else {
@@ -92,6 +94,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       }
     } catch (error) {
       console.error('Failed to hydrate session:', error);
+      toast.error('Failed to restore your session.');
       setUser(null);
       setProfile(null);
     } finally {
@@ -118,6 +121,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
               setProfile(profileData ?? null);
             } catch (error) {
               console.error('Failed to load profile:', error);
+              toast.error('Failed to load your profile.');
               setProfile(null);
             }
           } else {
@@ -125,6 +129,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
           }
         } catch (error) {
           console.error('Failed to handle auth change:', error);
+          toast.error('Failed to refresh your session.');
         } finally {
           setLoading(false);
         }
@@ -143,6 +148,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       setProfile(profileData ?? null);
     } catch (error) {
       console.error('Failed to refresh profile:', error);
+      toast.error('Failed to refresh your profile.');
     }
   }, [user]);
 
@@ -152,7 +158,13 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       password,
     });
 
-    return error ? error.message : null;
+    if (error) {
+      toast.error(error.message);
+      return error.message;
+    }
+
+    toast.success('Welcome back!');
+    return null;
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, fullName: string) => {
@@ -166,7 +178,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       },
     });
 
-    if (error) return error.message;
+    if (error) {
+      toast.error(error.message);
+      return error.message;
+    }
 
     const userId = data.user?.id;
     if (userId) {
@@ -178,16 +193,20 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
           email: data.user?.email ?? null,
         });
 
-      if (profileError) return profileError.message;
+      if (profileError) {
+        toast.error(profileError.message);
+        return profileError.message;
+      }
 
       try {
         const profileData = await fetchProfileWithRetry(userId);
         setProfile(profileData ?? null);
       } catch (profileLoadError) {
         console.error('Failed to hydrate profile after signup:', profileLoadError);
+        toast.error('Account created, but profile failed to load.');
       }
     }
-
+    toast.success('Account created successfully.');
     return null;
   }, []);
 
@@ -197,8 +216,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     setProfile(null);
     try {
       await supabase.auth.signOut();
+      toast.success('Signed out successfully.');
     } catch (error) {
       console.error('Failed to sign out:', error);
+      toast.error('Failed to sign out.');
     } finally {
       setLoading(false);
     }

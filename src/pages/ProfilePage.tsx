@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { DestinationTile } from '../components/DestinationTile';
 import { supabase } from '../lib/supabaseClient';
+import { toast } from 'sonner';
 
 interface ProfilePageProps {
   profileId: string;
@@ -50,6 +51,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
         });
       } catch (fetchError) {
         console.error('Failed to load profile:', fetchError);
+        toast.error('Failed to load profile.');
       }
     };
 
@@ -103,6 +105,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
         setDestinations(mapped);
       } catch (fetchError) {
         console.error('Failed to load destinations:', fetchError);
+        toast.error('Failed to load destinations.');
       }
     };
 

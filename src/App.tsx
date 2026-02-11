@@ -7,6 +7,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { HomePage } from './pages/HomePage';
 import { DestinationsPage } from './pages/DestinationsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { SonnerGlobal } from './components/modern-ui/sonner';
 import loadingVideo from './assets/Loading_chatbot.webm';
 
 const AppContent: React.FC = () => {
@@ -50,7 +51,7 @@ const AppContent: React.FC = () => {
 
   return (
     <ModalProvider>
-      <div className="min-h-screen flex flex-col bg-white">
+      <div className="min-h-screen flex flex-col">
         <div className="relative">
           <NavBar
             active={active}
@@ -82,6 +83,7 @@ const AppContent: React.FC = () => {
         </div>
         <GlobalModal onModeChange={setActive} />
       </div>
+      <SonnerGlobal />
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <video

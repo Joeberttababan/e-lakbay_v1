@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { DestinationModalCard } from '../components/DestinationModalCard';
 import { supabase } from '../lib/supabaseClient';
+import { toast } from 'sonner';
 
 interface DestinationSectionProps {
   onRate?: (name: string) => void;
@@ -110,6 +111,7 @@ export const DestinationSection: React.FC<DestinationSectionProps> = ({ onRate, 
         setDestinations(mapped);
       } catch (error) {
         console.error('Failed to load destinations:', error);
+        toast.error('Failed to load destinations.');
       }
     };
 

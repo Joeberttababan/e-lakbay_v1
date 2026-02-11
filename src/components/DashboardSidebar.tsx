@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthProvider';
+import { toast } from 'sonner';
 
 interface DashboardSidebarProps {
   displayName: string;
@@ -140,9 +141,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         setPreviewUrl(null);
       }
       await refreshProfile();
+      toast.success('Profile updated successfully.');
     } catch (updateError) {
       const message = updateError instanceof Error ? updateError.message : 'Failed to update profile.';
       setError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }

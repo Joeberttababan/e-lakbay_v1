@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { DestinationModalCard } from '../components/DestinationModalCard';
 import { RatingModal } from '../components/RatingModal';
 import { supabase } from '../lib/supabaseClient';
+import { toast } from 'sonner';
 
 interface DestinationItem {
   id: string;
@@ -120,6 +121,7 @@ export const TopDestinationsSection: React.FC<TopDestinationsSectionProps> = ({ 
         setDestinations(sorted.slice(0, 10));
       } catch (error) {
         console.error('Failed to load destinations:', error);
+        toast.error('Failed to load destinations.');
       }
     };
 

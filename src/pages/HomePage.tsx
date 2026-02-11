@@ -5,6 +5,7 @@ import { TopDestinationsSection } from '../sections/TopDestinationsSection';
 import { ProductCard } from '../components/ProductCard';
 import { RatingModal } from '../components/RatingModal';
 import { supabase } from '../lib/supabaseClient';
+import { toast } from 'sonner';
 
 interface ProductItem {
   id: string;
@@ -92,6 +93,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onViewDestinations, onViewPr
         setLocalProducts(sorted.slice(0, 12));
       } catch (error) {
         console.error('Failed to load products:', error);
+        toast.error('Failed to load products.');
       }
     };
 

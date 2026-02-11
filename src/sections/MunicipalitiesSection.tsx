@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { toast } from 'sonner';
 
 interface ProfileItem {
   id: string;
@@ -35,6 +36,7 @@ export const MunicipalitiesSection: React.FC<MunicipalitiesSectionProps> = ({ on
         setProfiles(mapped);
       } catch (fetchError) {
         console.error('Failed to load profiles:', fetchError);
+        toast.error('Failed to load hosts.');
       }
     };
 
@@ -51,7 +53,7 @@ export const MunicipalitiesSection: React.FC<MunicipalitiesSectionProps> = ({ on
   }
 
   return (
-    <section className="bg-slate-950 text-white -mx-4 sm:-mx-6 lg:-mx-10">
+    <section className=" text-white -mx-4 sm:-mx-6 lg:-mx-10">
       <div className="overflow-hidden municipalities-fade">
         <div className="municipalities-marquee">
           <div className="municipalities-track px-1 sm:px-2">

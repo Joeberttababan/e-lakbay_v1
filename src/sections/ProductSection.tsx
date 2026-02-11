@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import { supabase } from '../lib/supabaseClient';
+import { toast } from 'sonner';
 
 interface ProductSectionProps {
   onRate?: (name: string) => void;
@@ -83,6 +84,7 @@ export const ProductSection: React.FC<ProductSectionProps> = ({ onRate, userId }
         setProducts(mapped);
       } catch (error) {
         console.error('Failed to load products:', error);
+        toast.error('Failed to load products.');
       }
     };
 
