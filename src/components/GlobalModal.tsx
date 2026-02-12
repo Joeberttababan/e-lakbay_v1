@@ -22,7 +22,7 @@ const initialFormState: AuthFormState = {
 
 export const GlobalModal: React.FC<GlobalModalProps> = ({ onModeChange }) => {
   const { open, type, closeModal, openModal } = useModal();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signInWithGoogle, signUp } = useAuth();
   const [formState, setFormState] = useState<AuthFormState>(initialFormState);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,6 +106,39 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onModeChange }) => {
           {isSignup ? 'Start planning your next journey in minutes.' : 'Sign in to continue exploring.'}
         </p>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+          {!isSignup && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full rounded-full"
+              onClick={async () => {
+                if (isSubmitting) return;
+                setFormError(null);
+                setIsSubmitting(true);
+                try {
+                  const errorMessage = await signInWithGoogle();
+                  if (errorMessage) {
+                    setFormError(errorMessage);
+                  }
+                } catch (error) {
+                  const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+                  setFormError(message);
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              loading={isSubmitting}
+            >
+              Continue with Google
+            </Button>
+          )}
+          {!isSignup && (
+            <div className="flex items-center gap-3 text-xs text-white/50">
+              <span className="h-px flex-1 bg-white/10" />
+              OR
+              <span className="h-px flex-1 bg-white/10" />
+            </div>
+          )}
           {isSignup && (
             <input
               type="text"

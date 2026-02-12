@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { SkeletonList, TopDestinationSkeleton } from '../components/hero-ui/Skeletons';
 import { DestinationModalCard } from '../components/DestinationModalCard';
 import { RatingModal } from '../components/RatingModal';
+import { useAuth } from '../components/AuthProvider';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
 
@@ -26,7 +27,10 @@ interface HomepageTopDestinationsSectionProps {
 export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSectionProps> = ({
   onViewMore,
 }) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeDestination, setActiveDestination] = useState<{
+    id: string;
     name: string;
     imageUrl: string;
     imageUrls?: string[];
@@ -36,7 +40,7 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
     postedByName?: string;
     postedByImageUrl?: string | null;
   } | null>(null);
-  const [ratingTarget, setRatingTarget] = useState<{ name: string } | null>(null);
+  const [ratingTarget, setRatingTarget] = useState<{ id: string; name: string } | null>(null);
 
   const {
     data: destinations = [],
@@ -163,6 +167,7 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
                   type="button"
                   onClick={() =>
                     setActiveDestination({
+                      id: destination.id,
                       name: destination.name,
                       imageUrl: destination.imageUrl ?? '',
                       imageUrls: destination.imageUrls,
@@ -220,9 +225,15 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
               meta="Featured destination"
               postedBy={activeDestination.postedByName ?? 'Tourism Office'}
               postedByImageUrl={activeDestination.postedByImageUrl}
-              ratingAvg={activeDestination.ratingAvg ?? 4.7}
-              ratingCount={activeDestination.ratingCount ?? 128}
-              onRate={() => setRatingTarget({ name: activeDestination.name })}
+              ratingAvg={activeDestination.ratingAvg}
+              ratingCount={activeDestination.ratingCount}
+              onRate={() => {
+                if (!user) {
+                  toast.error('Please sign in to rate destinations.');
+                  return;
+                }
+                setRatingTarget({ id: activeDestination.id, name: activeDestination.name });
+              }}
             />
           </div>
         </div>
@@ -232,7 +243,56 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
         open={Boolean(ratingTarget)}
         title={ratingTarget ? `Rate Destination: ${ratingTarget.name}` : 'Rate'}
         onClose={() => setRatingTarget(null)}
-        onSubmit={() => setRatingTarget(null)}
+        onSubmit={async (rating, comment) => {
+          if (!ratingTarget || !user) return;
+          try {
+            const { error } = await supabase.from('destination_ratings').insert({
+              destination_id: ratingTarget.id,
+              user_id: user.id,
+              rating,
+              comment: comment || null,
+            });
+
+            if (error) {
+              throw error;
+            }
+
+            queryClient.setQueryData<DestinationItem[]>(['destinations', 'top'], (prev) => {
+              if (!prev) return prev;
+              return prev.map((item) => {
+                if (item.id !== ratingTarget.id) return item;
+                const currentCount = item.ratingCount ?? 0;
+                const currentAvg = item.ratingAvg ?? 0;
+                const nextCount = currentCount + 1;
+                const nextAvg = (currentAvg * currentCount + rating) / nextCount;
+                return {
+                  ...item,
+                  ratingAvg: nextAvg,
+                  ratingCount: nextCount,
+                };
+              });
+            });
+
+            setActiveDestination((prev) => {
+              if (!prev || prev.id !== ratingTarget.id) return prev;
+              const currentCount = prev.ratingCount ?? 0;
+              const currentAvg = prev.ratingAvg ?? 0;
+              const nextCount = currentCount + 1;
+              const nextAvg = (currentAvg * currentCount + rating) / nextCount;
+              return {
+                ...prev,
+                ratingAvg: nextAvg,
+                ratingCount: nextCount,
+              };
+            });
+
+            toast.success('Thanks for your rating!');
+            setRatingTarget(null);
+          } catch (error) {
+            console.error('Failed to submit rating:', error);
+            toast.error('Failed to submit rating. Please try again.');
+          }
+        }}
       />
     </section>
   );

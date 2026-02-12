@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DestinationTileSkeleton, SkeletonList } from '../components/hero-ui/Skeletons';
 import { DestinationTile } from '../components/DestinationTile';
 import { RatingModal } from '../components/RatingModal';
+import { useAuth } from '../components/AuthProvider';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
 import {
@@ -32,7 +33,9 @@ interface DestinationItem {
 }
 
 export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome }) => {
-  const [ratingTarget, setRatingTarget] = useState<{ name: string } | null>(null);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [ratingTarget, setRatingTarget] = useState<{ id: string; name: string } | null>(null);
   const {
     data: destinations = [],
     isPending: isDestinationsPending,
@@ -175,7 +178,13 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome }
                   ratingAvg={destination.ratingAvg}
                   ratingCount={destination.ratingCount}
                   enableModal
-                  onRate={() => setRatingTarget({ name: destination.name })}
+                  onRate={() => {
+                    if (!user) {
+                      toast.error('Please sign in to rate destinations.');
+                      return;
+                    }
+                    setRatingTarget({ id: destination.id, name: destination.name });
+                  }}
                 />
               ))
             )}
@@ -187,7 +196,43 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome }
         open={Boolean(ratingTarget)}
         title={ratingTarget ? `Rate Destination: ${ratingTarget.name}` : 'Rate'}
         onClose={() => setRatingTarget(null)}
-        onSubmit={() => setRatingTarget(null)}
+        onSubmit={async (rating, comment) => {
+          if (!ratingTarget || !user) return;
+          try {
+            const { error } = await supabase.from('destination_ratings').insert({
+              destination_id: ratingTarget.id,
+              user_id: user.id,
+              rating,
+              comment: comment || null,
+            });
+
+            if (error) {
+              throw error;
+            }
+
+            queryClient.setQueryData<DestinationItem[]>(['destinations', 'all'], (prev) => {
+              if (!prev) return prev;
+              return prev.map((item) => {
+                if (item.id !== ratingTarget.id) return item;
+                const currentCount = item.ratingCount ?? 0;
+                const currentAvg = item.ratingAvg ?? 0;
+                const nextCount = currentCount + 1;
+                const nextAvg = (currentAvg * currentCount + rating) / nextCount;
+                return {
+                  ...item,
+                  ratingAvg: nextAvg,
+                  ratingCount: nextCount,
+                };
+              });
+            });
+
+            toast.success('Thanks for your rating!');
+            setRatingTarget(null);
+          } catch (error) {
+            console.error('Failed to submit rating:', error);
+            toast.error('Failed to submit rating. Please try again.');
+          }
+        }}
       />
     </main>
   );

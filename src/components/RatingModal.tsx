@@ -6,17 +6,19 @@ interface RatingModalProps {
   open: boolean;
   title: string;
   onClose: () => void;
-  onSubmit?: (rating: number, comment: string) => void;
+  onSubmit?: (rating: number, comment: string) => void | Promise<void>;
 }
 
 export const RatingModal: React.FC<RatingModalProps> = ({ open, title, onClose, onSubmit }) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setRating(0);
       setComment('');
+      setIsSubmitting(false);
     }
   }, [open]);
 
@@ -89,16 +91,22 @@ export const RatingModal: React.FC<RatingModalProps> = ({ open, title, onClose, 
           <button
             type="button"
             className="rounded-full bg-white/10 border border-white/20 px-5 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
-            onClick={() => {
+            onClick={async () => {
               if (rating === 0) {
                 toast.error('Please select a rating first.');
                 return;
               }
-              onSubmit?.(rating, comment);
-              toast.success('Thanks for your rating!');
+              if (isSubmitting) return;
+              setIsSubmitting(true);
+              try {
+                await onSubmit?.(rating, comment);
+              } finally {
+                setIsSubmitting(false);
+              }
             }}
+            disabled={isSubmitting}
           >
-            Submit Rating
+            {isSubmitting ? 'Submitting...' : 'Submit Rating'}
           </button>
         </div>
       </div>

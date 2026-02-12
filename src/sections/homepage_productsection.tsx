@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Star } from 'lucide-react';
 import { ProductTileSkeleton, SkeletonList } from '../components/hero-ui/Skeletons';
 import { RatingModal } from '../components/RatingModal';
 import { ProductModal } from '../components/ProductModal';
+import { useAuth } from '../components/AuthProvider';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
 
@@ -20,7 +21,10 @@ interface ProductItem {
 }
 
 export const HomepageProductSection: React.FC = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeProduct, setActiveProduct] = useState<{
+    id: string;
     name: string;
     imageUrl: string;
     description?: string | null;
@@ -31,6 +35,7 @@ export const HomepageProductSection: React.FC = () => {
   const [ratingTarget, setRatingTarget] = useState<{
     type: 'Product' | 'Destination';
     name: string;
+    id: string;
   } | null>(null);
 
   const {
@@ -169,6 +174,7 @@ export const HomepageProductSection: React.FC = () => {
                 type="button"
                 onClick={() =>
                   setActiveProduct({
+                    id: product.id,
                     name: product.name,
                     imageUrl: product.imageUrl ?? '',
                     description: product.description,
@@ -217,16 +223,70 @@ export const HomepageProductSection: React.FC = () => {
         open={Boolean(activeProduct)}
         product={activeProduct}
         onClose={() => setActiveProduct(null)}
-        onRate={() =>
-          activeProduct && setRatingTarget({ type: 'Product', name: activeProduct.name })
-        }
+        onRate={() => {
+          if (!activeProduct) return;
+          if (!user) {
+            toast.error('Please sign in to rate products.');
+            return;
+          }
+          setRatingTarget({ type: 'Product', name: activeProduct.name, id: activeProduct.id });
+        }}
       />
 
       <RatingModal
         open={Boolean(ratingTarget)}
         title={ratingTarget ? `Rate ${ratingTarget.type}: ${ratingTarget.name}` : 'Rate'}
         onClose={() => setRatingTarget(null)}
-        onSubmit={() => setRatingTarget(null)}
+        onSubmit={async (rating, comment) => {
+          if (!ratingTarget || !user) return;
+          try {
+            const { error } = await supabase.from('product_ratings').insert({
+              product_id: ratingTarget.id,
+              user_id: user.id,
+              rating,
+              comment: comment || null,
+            });
+
+            if (error) {
+              throw error;
+            }
+
+            queryClient.setQueryData<ProductItem[]>(['products', 'home'], (prev) => {
+              if (!prev) return prev;
+              return prev.map((item) => {
+                if (item.id !== ratingTarget.id) return item;
+                const currentCount = item.ratingCount ?? 0;
+                const currentAvg = item.ratingAvg ?? 0;
+                const nextCount = currentCount + 1;
+                const nextAvg = (currentAvg * currentCount + rating) / nextCount;
+                return {
+                  ...item,
+                  ratingAvg: nextAvg,
+                  ratingCount: nextCount,
+                };
+              });
+            });
+
+            setActiveProduct((prev) => {
+              if (!prev || prev.id !== ratingTarget.id) return prev;
+              const currentCount = prev.ratingCount ?? 0;
+              const currentAvg = prev.ratingAvg ?? 0;
+              const nextCount = currentCount + 1;
+              const nextAvg = (currentAvg * currentCount + rating) / nextCount;
+              return {
+                ...prev,
+                ratingAvg: nextAvg,
+                ratingCount: nextCount,
+              };
+            });
+
+            toast.success('Thanks for your rating!');
+            setRatingTarget(null);
+          } catch (error) {
+            console.error('Failed to submit rating:', error);
+            toast.error('Failed to submit rating. Please try again.');
+          }
+        }}
       />
     </>
   );

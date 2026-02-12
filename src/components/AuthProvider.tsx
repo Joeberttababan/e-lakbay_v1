@@ -18,6 +18,7 @@ interface AuthContextValue {
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<string | null>;
+  signInWithGoogle: () => Promise<string | null>;
   signUp: (email: string, password: string, fullName: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -167,6 +168,21 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     return null;
   }, []);
 
+  const signInWithGoogle = useCallback(async () => {
+    const redirectTo = window.location.origin;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
+    });
+
+    if (error) {
+      toast.error(error.message);
+      return error.message;
+    }
+
+    return null;
+  }, []);
+
   const signUp = useCallback(async (email: string, password: string, fullName: string) => {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
@@ -231,11 +247,12 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       profile,
       loading,
       signIn,
+      signInWithGoogle,
       signUp,
       signOut,
       refreshProfile,
     }),
-    [user, profile, loading, signIn, signUp, signOut, refreshProfile]
+    [user, profile, loading, signIn, signInWithGoogle, signUp, signOut, refreshProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

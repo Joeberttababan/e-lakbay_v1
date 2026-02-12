@@ -8,6 +8,8 @@ create table public.products (
   updated_at timestamp with time zone null default now(),
   image_urls text[] null,
   user_id uuid null,
+  rating_avg numeric null,
+  rating_count integer null default 0,
   constraint products_pkey primary key (id),
   constraint products_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete set null
 ) TABLESPACE pg_default;
