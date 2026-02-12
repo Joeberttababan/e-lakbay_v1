@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { DestinationTileSkeleton, ProfileHeaderSkeleton, SkeletonList } from '../components/hero-ui/Skeletons';
 import { DestinationTile } from '../components/DestinationTile';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
@@ -35,11 +37,9 @@ interface DestinationItem {
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome }) => {
-  const [profile, setProfile] = useState<ProfileInfo | null>(null);
-  const [destinations, setDestinations] = useState<DestinationItem[]>([]);
-
-  useEffect(() => {
-    const loadProfile = async () => {
+  const { data: profile, isPending: isProfilePending, isFetching: isProfileFetching } = useQuery({
+    queryKey: ['profiles', profileId],
+    queryFn: async () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -51,24 +51,28 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
           throw error;
         }
 
-        setProfile({
+        return {
           id: data.id,
           fullName: data.full_name ?? null,
           email: data.email ?? null,
           imageUrl: data.img_url ?? null,
           battleCry: data.battle_cry ?? null,
-        });
+        } as ProfileInfo;
       } catch (fetchError) {
         console.error('Failed to load profile:', fetchError);
         toast.error('Failed to load profile.');
+        return null;
       }
-    };
+    },
+  });
 
-    loadProfile();
-  }, [profileId]);
-
-  useEffect(() => {
-    const loadDestinations = async () => {
+  const {
+    data: destinations = [],
+    isPending: isDestinationsPending,
+    isFetching: isDestinationsFetching,
+  } = useQuery({
+    queryKey: ['destinations', 'profile', profileId],
+    queryFn: async () => {
       try {
         const { data: destinationRows, error: destinationError } = await supabase
           .from('destinations')
@@ -97,7 +101,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
           });
         });
 
-        const mapped = (destinationRows ?? []).map((row) => {
+        return (destinationRows ?? []).map((row) => {
           const rating = ratingMap.get(row.id);
           const ratingAvg = rating && rating.count > 0 ? rating.total / rating.count : undefined;
           const imageUrls = (row as { image_urls?: string[] }).image_urls ?? [];
@@ -111,18 +115,18 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
             ratingCount: rating?.count,
           } as DestinationItem;
         });
-
-        setDestinations(mapped);
       } catch (fetchError) {
         console.error('Failed to load destinations:', fetchError);
         toast.error('Failed to load destinations.');
+        return [] as DestinationItem[];
       }
-    };
-
-    loadDestinations();
-  }, [profileId]);
+    },
+  });
 
   const visibleDestinations = useMemo(() => destinations.filter((item) => item.imageUrl), [destinations]);
+  const showProfileSkeleton = isProfilePending || isProfileFetching;
+  const showDestinationSkeletons =
+    isDestinationsPending || (isDestinationsFetching && destinations.length === 0);
   const displayName = profile?.fullName || profile?.email || 'Traveler';
 
   return (
@@ -152,19 +156,23 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
           </div>
         )}
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between mt-1 sm:mt-3 md:mt-5">
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border border-white/20 bg-white/10 overflow-hidden flex items-center justify-center text-lg font-semibold">
-              {profile?.imageUrl ? (
-                <img src={profile.imageUrl} alt={displayName} className="h-full w-full object-cover" />
-              ) : (
-                displayName.charAt(0).toUpperCase()
-              )}
+          {showProfileSkeleton ? (
+            <ProfileHeaderSkeleton />
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border border-white/20 bg-white/10 overflow-hidden flex items-center justify-center text-lg font-semibold">
+                {profile?.imageUrl ? (
+                  <img src={profile.imageUrl} alt={displayName} className="h-full w-full object-cover" />
+                ) : (
+                  displayName.charAt(0).toUpperCase()
+                )}
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-semibold">{displayName}</h1>
+                {profile?.battleCry && <p className="text-sm text-white/70 mt-1">{profile.battleCry}</p>}
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold">{displayName}</h1>
-              {profile?.battleCry && <p className="text-sm text-white/70 mt-1">{profile.battleCry}</p>}
-            </div>
-          </div>
+          )}
         </div>
 
         <section className="mt-10">
@@ -173,24 +181,33 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
             <span className="text-xs text-white/50">{visibleDestinations.length} entries</span>
           </div>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {visibleDestinations.map((destination) => (
-              <DestinationTile
-                key={destination.id}
-                title={destination.name}
-                description={destination.description ?? 'A featured destination from Ilocos Sur.'}
-                imageUrl={destination.imageUrl ?? ''}
-                imageUrls={destination.imageUrls}
-                meta="Uploaded destination"
-                postedBy={displayName}
-                postedByImageUrl={profile?.imageUrl ?? null}
-                ratingAvg={destination.ratingAvg}
-                ratingCount={destination.ratingCount}
-                enableModal
+            {showDestinationSkeletons ? (
+              <SkeletonList
+                count={3}
+                render={(index) => <DestinationTileSkeleton key={`profile-destination-skeleton-${index}`} />}
               />
-            ))}
+            ) : (
+              visibleDestinations.map((destination) => (
+                <DestinationTile
+                  key={destination.id}
+                  title={destination.name}
+                  description={destination.description ?? 'A featured destination from Ilocos Sur.'}
+                  imageUrl={destination.imageUrl ?? ''}
+                  imageUrls={destination.imageUrls}
+                  meta="Uploaded destination"
+                  postedBy={displayName}
+                  postedByImageUrl={profile?.imageUrl ?? null}
+                  ratingAvg={destination.ratingAvg}
+                  ratingCount={destination.ratingCount}
+                  enableModal
+                />
+              ))
+            )}
           </div>
         </section>
       </div>
     </main>
   );
 };
+
+export default ProfilePage;

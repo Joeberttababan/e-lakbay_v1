@@ -6,7 +6,7 @@ import { AuthProvider, useAuth } from './components/AuthProvider';
 import { DashboardPage } from './pages/DashboardPage';
 import { HomePage } from './pages/HomePage';
 import { DestinationsPage } from './pages/DestinationsPage';
-import { ProfilePage } from './pages/ProfilePage';
+import ProfilePage from './pages/ProfilePage';
 import { SonnerGlobal } from './components/modern-ui/sonner';
 import loadingVideo from './assets/Loading_chatbot.webm';
 

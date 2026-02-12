@@ -44,13 +44,59 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [slideState, setSlideState] = useState<{
+    from: number;
+    to: number;
+    direction: 'next' | 'prev';
+  } | null>(null);
+  const [offsetPercent, setOffsetPercent] = useState(0);
+  const [transitionMs, setTransitionMs] = useState(320);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(false);
+
+  const preloadImage = (src: string) =>
+    new Promise<void>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+      img.src = src;
+    });
+
+  const runSlide = async (direction: 'next' | 'prev') => {
+    if (isTransitioning || images.length <= 1) return;
+
+    const targetIndex =
+      direction === 'next'
+        ? (activeIndex + 1) % images.length
+        : (activeIndex - 1 + images.length) % images.length;
+
+    setIsImageLoading(true);
+    const start = performance.now();
+    await preloadImage(images[targetIndex]);
+    const elapsed = performance.now() - start;
+    const duration = Math.min(900, Math.max(220, Math.round(elapsed)));
+
+    setTransitionMs(duration);
+    setSlideState({
+      from: direction === 'next' ? activeIndex : targetIndex,
+      to: direction === 'next' ? targetIndex : activeIndex,
+      direction,
+    });
+    setOffsetPercent(direction === 'next' ? 0 : 50);
+    setIsTransitioning(false);
+
+    requestAnimationFrame(() => {
+      setIsTransitioning(true);
+      setOffsetPercent(direction === 'next' ? 50 : 0);
+    });
+  };
 
   const handlePrev = () => {
-    setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+    runSlide('prev');
   };
 
   const handleNext = () => {
-    setActiveIndex((prev) => (prev + 1) % images.length);
+    runSlide('next');
   };
 
   const todayLabel = useMemo(
@@ -95,17 +141,51 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-5">
         <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-white/10">
-          <img
-            src={images[activeIndex]}
-            alt={title}
-            className="h-56 sm:h-72 lg:h-80 w-full object-cover"
-          />
+          {slideState ? (
+            <div
+              className="flex w-[200%]"
+              style={{
+                transform: `translateX(-${offsetPercent}%)`,
+                transition: isTransitioning ? `transform ${transitionMs}ms ease` : 'none',
+              }}
+              onTransitionEnd={() => {
+                if (!slideState) return;
+                setActiveIndex(slideState.direction === 'next' ? slideState.to : slideState.from);
+                setSlideState(null);
+                setIsTransitioning(false);
+                setIsImageLoading(false);
+                setOffsetPercent(0);
+              }}
+            >
+              <div className="w-1/2">
+                <img
+                  src={images[slideState.from]}
+                  alt={title}
+                  className="h-56 sm:h-72 lg:h-80 w-full object-cover"
+                />
+              </div>
+              <div className="w-1/2">
+                <img
+                  src={images[slideState.to]}
+                  alt={title}
+                  className="h-56 sm:h-72 lg:h-80 w-full object-cover"
+                />
+              </div>
+            </div>
+          ) : (
+            <img
+              src={images[activeIndex]}
+              alt={title}
+              className="h-56 sm:h-72 lg:h-80 w-full object-cover"
+            />
+          )}
           {images.length > 1 && (
             <>
               <button
                 type="button"
                 onClick={handlePrev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center hover:bg-black/80 transition"
+                disabled={isImageLoading || isTransitioning}
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center hover:bg-black/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Previous image"
               >
                 <span className="text-lg">‹</span>
@@ -113,7 +193,8 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
               <button
                 type="button"
                 onClick={handleNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center hover:bg-black/80 transition"
+                disabled={isImageLoading || isTransitioning}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center hover:bg-black/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Next image"
               >
                 <span className="text-lg">›</span>

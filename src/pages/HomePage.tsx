@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { ProductTileSkeleton, SkeletonList } from '../components/hero-ui/Skeletons';
 import { HeroSection } from '../sections/HeroSection';
 import { MunicipalitiesSection } from '../sections/MunicipalitiesSection';
 import { TopDestinationsSection } from '../sections/TopDestinationsSection';
@@ -23,7 +25,6 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onViewDestinations, onViewProfile }) => {
-  const [localProducts, setLocalProducts] = useState<ProductItem[]>([]);
   const [activeProduct, setActiveProduct] = useState<{
     name: string;
     imageUrl: string;
@@ -33,8 +34,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onViewDestinations, onViewPr
   } | null>(null);
   const [ratingTarget, setRatingTarget] = useState<{ type: 'Product' | 'Destination'; name: string } | null>(null);
 
-  useEffect(() => {
-    const loadProducts = async () => {
+  const {
+    data: localProducts = [],
+    isPending: isProductsPending,
+    isFetching: isProductsFetching,
+  } = useQuery({
+    queryKey: ['products', 'home'],
+    queryFn: async () => {
       try {
         const { data: productRows, error: productError } = await supabase
           .from('products')
@@ -90,17 +96,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onViewDestinations, onViewPr
           return bDate - aDate;
         });
 
-        setLocalProducts(sorted.slice(0, 12));
+        return sorted.slice(0, 12);
       } catch (error) {
         console.error('Failed to load products:', error);
         toast.error('Failed to load products.');
+        return [] as ProductItem[];
       }
-    };
-
-    loadProducts();
-  }, []);
+    },
+  });
 
   const visibleProducts = useMemo(() => localProducts.filter((item) => item.imageUrl), [localProducts]);
+  const showProductSkeletons = isProductsPending || (isProductsFetching && localProducts.length === 0);
 
   return (
     <>
@@ -117,30 +123,37 @@ export const HomePage: React.FC<HomePageProps> = ({ onViewDestinations, onViewPr
               </p>
             </div>
             <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {visibleProducts.map((product) => (
-                <button
-                  key={product.id}
-                  type="button"
-                  onClick={() =>
-                    setActiveProduct({
-                      name: product.name,
-                      imageUrl: product.imageUrl ?? '',
-                      description: product.description,
-                      ratingAvg: product.ratingAvg,
-                      ratingCount: product.ratingCount,
-                    })}
-                  className="flex flex-col gap-3 text-left focus:outline-none focus:ring-2 focus:ring-white/40"
-                >
-                  <div className="aspect-square rounded-2xl overflow-hidden border border-white/10 bg-white/5">
-                    <img
-                      src={product.imageUrl ?? ''}
-                      alt={product.name}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <p className="text-sm font-semibold text-white/90 text-center">{product.name}</p>
-                </button>
-              ))}
+              {showProductSkeletons ? (
+                <SkeletonList
+                  count={12}
+                  render={(index) => <ProductTileSkeleton key={`product-skeleton-${index}`} />}
+                />
+              ) : (
+                visibleProducts.map((product) => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() =>
+                      setActiveProduct({
+                        name: product.name,
+                        imageUrl: product.imageUrl ?? '',
+                        description: product.description,
+                        ratingAvg: product.ratingAvg,
+                        ratingCount: product.ratingCount,
+                      })}
+                    className="flex flex-col gap-3 text-left focus:outline-none focus:ring-2 focus:ring-white/40"
+                  >
+                    <div className="aspect-square rounded-2xl overflow-hidden border border-white/10 bg-white/5">
+                      <img
+                        src={product.imageUrl ?? ''}
+                        alt={product.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <p className="text-sm font-semibold text-white/90 text-center">{product.name}</p>
+                  </button>
+                ))
+              )}
             </div>
           </section>
         </div>

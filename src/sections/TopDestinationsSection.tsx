@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { SkeletonList, TopDestinationSkeleton } from '../components/hero-ui/Skeletons';
 import { DestinationModalCard } from '../components/DestinationModalCard';
 import { RatingModal } from '../components/RatingModal';
 import { supabase } from '../lib/supabaseClient';
@@ -22,7 +24,6 @@ interface TopDestinationsSectionProps {
 }
 
 export const TopDestinationsSection: React.FC<TopDestinationsSectionProps> = ({ onViewMore }) => {
-  const [destinations, setDestinations] = useState<DestinationItem[]>([]);
   const [activeDestination, setActiveDestination] = useState<{
     name: string;
     imageUrl: string;
@@ -35,8 +36,13 @@ export const TopDestinationsSection: React.FC<TopDestinationsSectionProps> = ({ 
   } | null>(null);
   const [ratingTarget, setRatingTarget] = useState<{ name: string } | null>(null);
 
-  useEffect(() => {
-    const loadDestinations = async () => {
+  const {
+    data: destinations = [],
+    isPending: isDestinationsPending,
+    isFetching: isDestinationsFetching,
+  } = useQuery({
+    queryKey: ['destinations', 'top'],
+    queryFn: async () => {
       try {
         const { data: destinationRows, error: destinationError } = await supabase
           .from('destinations')
@@ -118,17 +124,18 @@ export const TopDestinationsSection: React.FC<TopDestinationsSectionProps> = ({ 
           return bDate - aDate;
         });
 
-        setDestinations(sorted.slice(0, 10));
+        return sorted.slice(0, 10);
       } catch (error) {
         console.error('Failed to load destinations:', error);
         toast.error('Failed to load destinations.');
+        return [] as DestinationItem[];
       }
-    };
-
-    loadDestinations();
-  }, []);
+    },
+  });
 
   const visibleDestinations = useMemo(() => destinations.filter((item) => item.imageUrl), [destinations]);
+  const showDestinationSkeletons =
+    isDestinationsPending || (isDestinationsFetching && destinations.length === 0);
 
   return (
     <section className="mt-12">
@@ -142,33 +149,40 @@ export const TopDestinationsSection: React.FC<TopDestinationsSectionProps> = ({ 
       <div className="mt-8">
         <div className="overflow-x-auto hide-scrollbar">
           <div className="flex gap-5 pr-[12.5%] pl-[12.5%] -ml-[12.5%]">
-            {visibleDestinations.map((destination) => (
-              <button
-                key={destination.id}
-                type="button"
-                onClick={() =>
-                  setActiveDestination({
-                    name: destination.name,
-                    imageUrl: destination.imageUrl ?? '',
-                    imageUrls: destination.imageUrls,
-                    description: destination.description,
-                    ratingAvg: destination.ratingAvg,
-                    ratingCount: destination.ratingCount,
-                    postedByName: destination.postedByName,
-                    postedByImageUrl: destination.postedByImageUrl,
-                  })}
-                className="relative min-w-[60%] sm:min-w-[40%] lg:min-w-[35%] aspect-square overflow-hidden border border-white/10 bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/40"
-              >
-                <img
-                  src={destination.imageUrl ?? ''}
-                  alt={destination.name}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4">
-                  <p className="text-sm sm:text-base font-semibold text-white">{destination.name}</p>
-                </div>
-              </button>
-            ))}
+            {showDestinationSkeletons ? (
+              <SkeletonList
+                count={4}
+                render={(index) => <TopDestinationSkeleton key={`top-destination-skeleton-${index}`} />}
+              />
+            ) : (
+              visibleDestinations.map((destination) => (
+                <button
+                  key={destination.id}
+                  type="button"
+                  onClick={() =>
+                    setActiveDestination({
+                      name: destination.name,
+                      imageUrl: destination.imageUrl ?? '',
+                      imageUrls: destination.imageUrls,
+                      description: destination.description,
+                      ratingAvg: destination.ratingAvg,
+                      ratingCount: destination.ratingCount,
+                      postedByName: destination.postedByName,
+                      postedByImageUrl: destination.postedByImageUrl,
+                    })}
+                  className="relative min-w-[60%] sm:min-w-[40%] lg:min-w-[35%] aspect-square overflow-hidden border border-white/10 bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/40"
+                >
+                  <img
+                    src={destination.imageUrl ?? ''}
+                    alt={destination.name}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4">
+                    <p className="text-sm sm:text-base font-semibold text-white">{destination.name}</p>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </div>
         <div className="mt-6 flex flex-col items-center gap-2 text-sm md:text-base text-white/80">

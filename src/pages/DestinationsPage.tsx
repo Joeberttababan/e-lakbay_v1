@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { DestinationTileSkeleton, SkeletonList } from '../components/hero-ui/Skeletons';
 import { DestinationTile } from '../components/DestinationTile';
 import { RatingModal } from '../components/RatingModal';
 import { supabase } from '../lib/supabaseClient';
@@ -30,11 +32,14 @@ interface DestinationItem {
 }
 
 export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome }) => {
-  const [destinations, setDestinations] = useState<DestinationItem[]>([]);
   const [ratingTarget, setRatingTarget] = useState<{ name: string } | null>(null);
-
-  useEffect(() => {
-    const loadDestinations = async () => {
+  const {
+    data: destinations = [],
+    isPending: isDestinationsPending,
+    isFetching: isDestinationsFetching,
+  } = useQuery({
+    queryKey: ['destinations', 'all'],
+    queryFn: async () => {
       try {
         const { data: destinationRows, error: destinationError } = await supabase
           .from('destinations')
@@ -82,7 +87,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome }
           });
         }
 
-        const mapped = (destinationRows ?? []).map((row) => {
+        return (destinationRows ?? []).map((row) => {
           const rating = ratingMap.get(row.id);
           const ratingAvg = rating && rating.count > 0 ? rating.total / rating.count : undefined;
           const typedRow = row as { image_urls?: string[]; user_id?: string | null };
@@ -102,18 +107,17 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome }
             postedByImageUrl: profile?.img_url ?? null,
           } as DestinationItem;
         });
-
-        setDestinations(mapped);
       } catch (error) {
         console.error('Failed to load destinations:', error);
         toast.error('Failed to load destinations.');
+        return [] as DestinationItem[];
       }
-    };
-
-    loadDestinations();
-  }, []);
+    },
+  });
 
   const visibleDestinations = useMemo(() => destinations.filter((item) => item.imageUrl), [destinations]);
+  const showDestinationSkeletons =
+    isDestinationsPending || (isDestinationsFetching && destinations.length === 0);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white pt-12 md:pt-20 pb-12 px-4 sm:px-6 lg:px-10">
@@ -152,22 +156,29 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome }
 
         <section className="mt-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {visibleDestinations.map((destination) => (
-              <DestinationTile
-                key={destination.id}
-                title={destination.name}
-                description={destination.description ?? 'A featured destination from Ilocos Sur.'}
-                imageUrl={destination.imageUrl ?? ''}
-                imageUrls={destination.imageUrls}
-                meta="Uploaded destination"
-                postedBy={destination.postedByName ?? 'Community'}
-                postedByImageUrl={destination.postedByImageUrl}
-                ratingAvg={destination.ratingAvg}
-                ratingCount={destination.ratingCount}
-                enableModal
-                onRate={() => setRatingTarget({ name: destination.name })}
+            {showDestinationSkeletons ? (
+              <SkeletonList
+                count={6}
+                render={(index) => <DestinationTileSkeleton key={`destination-skeleton-${index}`} />}
               />
-            ))}
+            ) : (
+              visibleDestinations.map((destination) => (
+                <DestinationTile
+                  key={destination.id}
+                  title={destination.name}
+                  description={destination.description ?? 'A featured destination from Ilocos Sur.'}
+                  imageUrl={destination.imageUrl ?? ''}
+                  imageUrls={destination.imageUrls}
+                  meta="Uploaded destination"
+                  postedBy={destination.postedByName ?? 'Community'}
+                  postedByImageUrl={destination.postedByImageUrl}
+                  ratingAvg={destination.ratingAvg}
+                  ratingCount={destination.ratingCount}
+                  enableModal
+                  onRate={() => setRatingTarget({ name: destination.name })}
+                />
+              ))
+            )}
           </div>
         </section>
       </div>

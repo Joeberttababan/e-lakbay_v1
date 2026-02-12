@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { DestinationModalCardSkeleton, SkeletonList } from '../components/hero-ui/Skeletons';
 import { DestinationModalCard } from '../components/DestinationModalCard';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
@@ -21,10 +23,13 @@ interface DestinationItem {
 }
 
 export const DestinationSection: React.FC<DestinationSectionProps> = ({ onRate, userId }) => {
-  const [destinations, setDestinations] = useState<DestinationItem[]>([]);
-
-  useEffect(() => {
-    const loadDestinations = async () => {
+  const {
+    data: destinations = [],
+    isPending: isDestinationsPending,
+    isFetching: isDestinationsFetching,
+  } = useQuery({
+    queryKey: ['destinations', 'dashboard', userId ?? 'all'],
+    queryFn: async () => {
       try {
         let query = supabase
           .from('destinations')
@@ -87,7 +92,7 @@ export const DestinationSection: React.FC<DestinationSectionProps> = ({ onRate, 
           });
         }
 
-        const mapped = (destinationRows ?? []).map((row) => {
+        return (destinationRows ?? []).map((row) => {
           const rating = ratingMap.get(row.id);
           const ratingAvg = rating && rating.count > 0 ? rating.total / rating.count : undefined;
           const typedRow = row as { image_urls?: string[]; user_id?: string | null };
@@ -107,18 +112,17 @@ export const DestinationSection: React.FC<DestinationSectionProps> = ({ onRate, 
             postedByImageUrl: profile?.img_url ?? null,
           } as DestinationItem;
         });
-
-        setDestinations(mapped);
       } catch (error) {
         console.error('Failed to load destinations:', error);
         toast.error('Failed to load destinations.');
+        return [] as DestinationItem[];
       }
-    };
-
-    loadDestinations();
-  }, [userId]);
+    },
+  });
 
   const visibleDestinations = useMemo(() => destinations.filter((item) => item.imageUrl), [destinations]);
+  const showDestinationSkeletons =
+    isDestinationsPending || (isDestinationsFetching && destinations.length === 0);
 
   return (
     <section id="destinations" className="mt-10">
@@ -129,21 +133,28 @@ export const DestinationSection: React.FC<DestinationSectionProps> = ({ onRate, 
         </div>
       </div>
       <div className="flex flex-col gap-4">
-        {visibleDestinations.map((destination) => (
-          <DestinationModalCard
-            key={destination.id}
-            title={destination.name}
-            meta="Uploaded destination"
-            description={destination.description ?? ''}
-            imageUrl={destination.imageUrl ?? ''}
-            imageUrls={destination.imageUrls}
-            postedBy={destination.postedBy}
-            postedByImageUrl={destination.postedByImageUrl}
-            ratingAvg={destination.ratingAvg}
-            ratingCount={destination.ratingCount}
-            onRate={onRate ? () => onRate(destination.name) : undefined}
+        {showDestinationSkeletons ? (
+          <SkeletonList
+            count={1}
+            render={(index) => <DestinationModalCardSkeleton key={`destination-card-skeleton-${index}`} />}
           />
-        ))}
+        ) : (
+          visibleDestinations.map((destination) => (
+            <DestinationModalCard
+              key={destination.id}
+              title={destination.name}
+              meta="Uploaded destination"
+              description={destination.description ?? ''}
+              imageUrl={destination.imageUrl ?? ''}
+              imageUrls={destination.imageUrls}
+              postedBy={destination.postedBy}
+              postedByImageUrl={destination.postedByImageUrl}
+              ratingAvg={destination.ratingAvg}
+              ratingCount={destination.ratingCount}
+              onRate={onRate ? () => onRate(destination.name) : undefined}
+            />
+          ))
+        )}
       </div>
     </section>
   );

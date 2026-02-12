@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { ProductCardSkeleton, SkeletonList } from '../components/hero-ui/Skeletons';
 import { ProductCard } from '../components/ProductCard';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
@@ -19,10 +21,13 @@ interface ProductItem {
 }
 
 export const ProductSection: React.FC<ProductSectionProps> = ({ onRate, userId }) => {
-  const [products, setProducts] = useState<ProductItem[]>([]);
-
-  useEffect(() => {
-    const loadProducts = async () => {
+  const {
+    data: products = [],
+    isPending: isProductsPending,
+    isFetching: isProductsFetching,
+  } = useQuery({
+    queryKey: ['products', 'dashboard', userId ?? 'all'],
+    queryFn: async () => {
       try {
         let query = supabase
           .from('products')
@@ -65,7 +70,7 @@ export const ProductSection: React.FC<ProductSectionProps> = ({ onRate, userId }
           });
         });
 
-        const mapped = (productRows ?? []).map((row) => {
+        return (productRows ?? []).map((row) => {
           const rating = ratingMap.get(row.id);
           const ratingAvg = rating && rating.count > 0 ? rating.total / rating.count : undefined;
           const imageUrls = (row as { image_urls?: string[] }).image_urls ?? [];
@@ -80,18 +85,16 @@ export const ProductSection: React.FC<ProductSectionProps> = ({ onRate, userId }
             ratingCount: rating?.count,
           } as ProductItem;
         });
-
-        setProducts(mapped);
       } catch (error) {
         console.error('Failed to load products:', error);
         toast.error('Failed to load products.');
+        return [] as ProductItem[];
       }
-    };
-
-    loadProducts();
-  }, [userId]);
+    },
+  });
 
   const visibleProducts = useMemo(() => products.filter((item) => item.imageUrl), [products]);
+  const showProductSkeletons = isProductsPending || (isProductsFetching && products.length === 0);
 
   return (
     <section id="products" className="mt-10">
@@ -102,18 +105,25 @@ export const ProductSection: React.FC<ProductSectionProps> = ({ onRate, userId }
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {visibleProducts.map((product) => (
-          <ProductCard
-            key={product.id}
-            title={product.name}
-            meta={`Destination: ${product.destination}`}
-            description={product.description ?? ''}
-            imageUrl={product.imageUrl ?? ''}
-            ratingAvg={product.ratingAvg}
-            ratingCount={product.ratingCount}
-            onRate={onRate ? () => onRate(product.name) : undefined}
+        {showProductSkeletons ? (
+          <SkeletonList
+            count={4}
+            render={(index) => <ProductCardSkeleton key={`product-card-skeleton-${index}`} />}
           />
-        ))}
+        ) : (
+          visibleProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              title={product.name}
+              meta={`Destination: ${product.destination}`}
+              description={product.description ?? ''}
+              imageUrl={product.imageUrl ?? ''}
+              ratingAvg={product.ratingAvg}
+              ratingCount={product.ratingCount}
+              onRate={onRate ? () => onRate(product.name) : undefined}
+            />
+          ))
+        )}
       </div>
     </section>
   );
