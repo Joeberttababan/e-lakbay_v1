@@ -10,11 +10,13 @@ interface ProfileItem {
   imageUrl: string | null;
 }
 
-interface MunicipalitiesSectionProps {
+interface HomepageMunicipalitiesSectionProps {
   onSelectProfile?: (profileId: string) => void;
 }
 
-export const MunicipalitiesSection: React.FC<MunicipalitiesSectionProps> = ({ onSelectProfile }) => {
+export const HomepageMunicipalitiesSection: React.FC<HomepageMunicipalitiesSectionProps> = ({
+  onSelectProfile,
+}) => {
   const {
     data: profiles = [],
     isPending: isProfilesPending,

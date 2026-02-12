@@ -5,14 +5,14 @@ import { ProductCard } from '../components/ProductCard';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
 
-interface ProductSectionProps {
+interface DashboardProductSectionProps {
   onRate?: (name: string) => void;
   userId?: string | null;
 }
 interface ProductItem {
   id: string;
   name: string;
-  destination: string;
+  uploaderName: string;
   description: string | null;
   imageUrl: string | null;
   createdAt: string | null;
@@ -20,7 +20,7 @@ interface ProductItem {
   ratingCount?: number;
 }
 
-export const ProductSection: React.FC<ProductSectionProps> = ({ onRate, userId }) => {
+export const DashboardProductSection: React.FC<DashboardProductSectionProps> = ({ onRate, userId }) => {
   const {
     data: products = [],
     isPending: isProductsPending,
@@ -31,7 +31,7 @@ export const ProductSection: React.FC<ProductSectionProps> = ({ onRate, userId }
       try {
         let query = supabase
           .from('products')
-          .select('id, product_name, destination_name, description, image_url, image_urls, created_at')
+          .select('id, product_name, destination_name, description, image_url, image_urls, created_at, user_id')
           .order('created_at', { ascending: false });
 
         if (userId) {
@@ -43,7 +43,7 @@ export const ProductSection: React.FC<ProductSectionProps> = ({ onRate, userId }
         if (productError && userId && productError.message.toLowerCase().includes('user_id')) {
           const retry = await supabase
             .from('products')
-            .select('id, product_name, destination_name, description, image_url, image_urls, created_at')
+            .select('id, product_name, destination_name, description, image_url, image_urls, created_at, user_id')
             .order('created_at', { ascending: false });
           productRows = retry.data ?? [];
           productError = retry.error ?? null;
@@ -70,14 +70,37 @@ export const ProductSection: React.FC<ProductSectionProps> = ({ onRate, userId }
           });
         });
 
+        const userIds = Array.from(
+          new Set((productRows ?? []).map((row) => row.user_id).filter(Boolean)),
+        ) as string[];
+
+        const profilesById = new Map<string, { full_name?: string | null; email?: string | null }>();
+        if (userIds.length > 0) {
+          const { data: profileRows, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .in('id', userIds);
+
+          if (profileError) {
+            throw profileError;
+          }
+
+          (profileRows ?? []).forEach((profile) => {
+            profilesById.set(profile.id, profile);
+          });
+        }
+
         return (productRows ?? []).map((row) => {
           const rating = ratingMap.get(row.id);
           const ratingAvg = rating && rating.count > 0 ? rating.total / rating.count : undefined;
           const imageUrls = (row as { image_urls?: string[] }).image_urls ?? [];
+          const typedRow = row as { user_id?: string | null };
+          const profile = typedRow.user_id ? profilesById.get(typedRow.user_id) : undefined;
+          const uploaderName = profile?.full_name || profile?.email || 'Traveler';
           return {
             id: row.id,
             name: row.product_name,
-            destination: row.destination_name,
+            uploaderName,
             description: row.description ?? null,
             imageUrl: imageUrls[0] ?? row.image_url ?? null,
             createdAt: row.created_at ?? null,
@@ -115,7 +138,7 @@ export const ProductSection: React.FC<ProductSectionProps> = ({ onRate, userId }
             <ProductCard
               key={product.id}
               title={product.name}
-              meta={`Destination: ${product.destination}`}
+              meta={product.uploaderName}
               description={product.description ?? ''}
               imageUrl={product.imageUrl ?? ''}
               ratingAvg={product.ratingAvg}

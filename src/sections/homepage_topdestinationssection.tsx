@@ -19,11 +19,13 @@ interface DestinationItem {
   postedByImageUrl?: string | null;
 }
 
-interface TopDestinationsSectionProps {
+interface HomepageTopDestinationsSectionProps {
   onViewMore?: () => void;
 }
 
-export const TopDestinationsSection: React.FC<TopDestinationsSectionProps> = ({ onViewMore }) => {
+export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSectionProps> = ({
+  onViewMore,
+}) => {
   const [activeDestination, setActiveDestination] = useState<{
     name: string;
     imageUrl: string;

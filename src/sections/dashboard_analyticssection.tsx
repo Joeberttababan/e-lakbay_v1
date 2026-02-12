@@ -1,10 +1,10 @@
 import React from 'react';
 
-interface AnalyticsSectionProps {
+interface DashboardAnalyticsSectionProps {
   displayName: string;
 }
 
-export const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ displayName }) => {
+export const DashboardAnalyticsSection: React.FC<DashboardAnalyticsSectionProps> = ({ displayName }) => {
   return (
     <section id="analytics-overview">
       <div className="flex flex-col gap-2 mb-8">

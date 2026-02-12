@@ -1,18 +1,22 @@
 import React from 'react';
 import { cn } from '../lib/utils';
 
-interface SearchBarProps {
+interface HomepageSearchBarProps {
   className?: string;
   placeholder?: string;
   onSearch?: (value: string) => void;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ className, placeholder = 'Search...', onSearch }) => {
+export const HomepageSearchBar: React.FC<HomepageSearchBarProps> = ({
+  className,
+  placeholder = 'Search...',
+  onSearch,
+}) => {
   const [value, setValue] = React.useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (onSearch) onSearch(value);
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    onSearch?.(value);
   };
 
   return (
@@ -28,7 +32,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ className, placeholder = '
         className="flex-1 bg-transparent outline-none text-base sm:text-lg px-2 text-white placeholder:text-white/70"
         placeholder={placeholder}
         value={value}
-        onChange={e => setValue(e.target.value)}
+        onChange={(event) => setValue(event.target.value)}
       />
       <button
         type="submit"

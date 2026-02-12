@@ -5,7 +5,7 @@ import { DestinationModalCard } from '../components/DestinationModalCard';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
 
-interface DestinationSectionProps {
+interface DashboardDestinationSectionProps {
   onRate?: (name: string) => void;
   userId?: string | null;
 }
@@ -22,7 +22,7 @@ interface DestinationItem {
   postedByImageUrl?: string | null;
 }
 
-export const DestinationSection: React.FC<DestinationSectionProps> = ({ onRate, userId }) => {
+export const DashboardDestinationSection: React.FC<DashboardDestinationSectionProps> = ({ onRate, userId }) => {
   const {
     data: destinations = [],
     isPending: isDestinationsPending,

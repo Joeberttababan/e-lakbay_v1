@@ -1,0 +1,233 @@
+import React, { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Star } from 'lucide-react';
+import { ProductTileSkeleton, SkeletonList } from '../components/hero-ui/Skeletons';
+import { RatingModal } from '../components/RatingModal';
+import { ProductModal } from '../components/ProductModal';
+import { supabase } from '../lib/supabaseClient';
+import { toast } from 'sonner';
+
+interface ProductItem {
+  id: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  createdAt: string | null;
+  ratingAvg?: number;
+  ratingCount?: number;
+  uploaderName: string;
+  uploaderImageUrl?: string | null;
+}
+
+export const HomepageProductSection: React.FC = () => {
+  const [activeProduct, setActiveProduct] = useState<{
+    name: string;
+    imageUrl: string;
+    description?: string | null;
+    ratingAvg?: number;
+    ratingCount?: number;
+    uploaderName?: string;
+  } | null>(null);
+  const [ratingTarget, setRatingTarget] = useState<{
+    type: 'Product' | 'Destination';
+    name: string;
+  } | null>(null);
+
+  const {
+    data: localProducts = [],
+    isPending: isProductsPending,
+    isFetching: isProductsFetching,
+  } = useQuery({
+    queryKey: ['products', 'home'],
+    queryFn: async () => {
+      try {
+        const { data: productRows, error: productError } = await supabase
+          .from('products')
+          .select('id, product_name, description, image_url, image_urls, created_at, user_id')
+          .order('created_at', { ascending: false });
+
+        if (productError) {
+          throw productError;
+        }
+
+        const { data: ratingRows, error: ratingError } = await supabase
+          .from('product_ratings')
+          .select('product_id, rating');
+
+        if (ratingError) {
+          throw ratingError;
+        }
+
+        const ratingMap = new Map<string, { total: number; count: number }>();
+        (ratingRows ?? []).forEach((row) => {
+          const current = ratingMap.get(row.product_id) ?? { total: 0, count: 0 };
+          ratingMap.set(row.product_id, {
+            total: current.total + (row.rating ?? 0),
+            count: current.count + 1,
+          });
+        });
+
+        const userIds = Array.from(
+          new Set((productRows ?? []).map((row) => row.user_id).filter(Boolean)),
+        ) as string[];
+
+        const profilesById = new Map<
+          string,
+          { full_name?: string | null; email?: string | null; img_url?: string | null }
+        >();
+        if (userIds.length > 0) {
+          const { data: profileRows, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email, img_url')
+            .in('id', userIds);
+
+          if (profileError) {
+            throw profileError;
+          }
+
+          (profileRows ?? []).forEach((profile) => {
+            profilesById.set(profile.id, profile);
+          });
+        }
+
+        const mapped = (productRows ?? []).map((row) => {
+          const rating = ratingMap.get(row.id);
+          const ratingAvg = rating && rating.count > 0 ? rating.total / rating.count : undefined;
+          const imageUrls = (row as { image_urls?: string[] }).image_urls ?? [];
+          const typedRow = row as { user_id?: string | null };
+          const profile = typedRow.user_id ? profilesById.get(typedRow.user_id) : undefined;
+          const uploaderName = profile?.full_name || profile?.email || 'Traveler';
+          return {
+            id: row.id,
+            name: row.product_name,
+            description: row.description ?? null,
+            imageUrl: imageUrls[0] ?? row.image_url ?? null,
+            createdAt: row.created_at ?? null,
+            ratingAvg,
+            ratingCount: rating?.count,
+            uploaderName,
+            uploaderImageUrl: profile?.img_url ?? null,
+          } as ProductItem;
+        });
+
+        const sorted = [...mapped].sort((a, b) => {
+          const aRated = typeof a.ratingAvg === 'number';
+          const bRated = typeof b.ratingAvg === 'number';
+          if (aRated && bRated) {
+            return (b.ratingAvg ?? 0) - (a.ratingAvg ?? 0);
+          }
+          if (aRated) return -1;
+          if (bRated) return 1;
+          const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bDate - aDate;
+        });
+
+        return sorted.slice(0, 12);
+      } catch (error) {
+        console.error('Failed to load products:', error);
+        toast.error('Failed to load products.');
+        return [] as ProductItem[];
+      }
+    },
+  });
+
+  const visibleProducts = useMemo(
+    () => localProducts.filter((item) => item.imageUrl),
+    [localProducts],
+  );
+  const showProductSkeletons = isProductsPending || (isProductsFetching && localProducts.length === 0);
+  const formatRating = (ratingAvg?: number, ratingCount?: number) => {
+    if (!ratingAvg || Number.isNaN(ratingAvg)) {
+      return 'No ratings yet';
+    }
+    if (ratingCount && ratingCount > 0) {
+      return `${ratingAvg.toFixed(1)} (${ratingCount})`;
+    }
+    return ratingAvg.toFixed(1);
+  };
+
+  return (
+    <>
+      <section className="mt-12">
+        <div className="text-center max-w-2xl mx-auto">
+          <h1 className="text-3xl font-semibold">Local Products</h1>
+          <p className="mt-3 text-sm text-white/70">
+            "Experience the best of Ilocos Sur's products"
+          </p>
+        </div>
+        <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+          {showProductSkeletons ? (
+            <SkeletonList
+              count={12}
+              render={(index) => <ProductTileSkeleton key={`product-skeleton-${index}`} />}
+            />
+          ) : (
+            visibleProducts.map((product) => (
+              <button
+                key={product.id}
+                type="button"
+                onClick={() =>
+                  setActiveProduct({
+                    name: product.name,
+                    imageUrl: product.imageUrl ?? '',
+                    description: product.description,
+                    ratingAvg: product.ratingAvg,
+                    ratingCount: product.ratingCount,
+                    uploaderName: product.uploaderName,
+                  })}
+                className="rounded-xl border border-white/10 bg-white/5 p-1 md:p-2 text-left focus:outline-none focus:ring-2 focus:ring-white/40"
+              >
+                <div className="relative aspect-square rounded-2xl overflow-hidden border border-white/10 bg-white/10">
+                  <img
+                    src={product.imageUrl ?? ''}
+                    alt={product.name}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute top-2 right-2 h-9 w-9 rounded-full border border-white/20 bg-black/40 overflow-hidden flex items-center justify-center text-[10px] font-semibold">
+                    {product.uploaderImageUrl ? (
+                      <img
+                        src={product.uploaderImageUrl}
+                        alt={product.uploaderName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      product.uploaderName.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <div className="absolute inset-x-0 bottom-0 bg-black/55 backdrop-blur-sm p-2">
+                    <p className="text-sm font-semibold text-white line-clamp-2">
+                      {product.name}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-sm text-yellow-300">
+                  <Star className="h-4 w-4 text-yellow-300" fill="currentColor" />
+                  <span className="text-white/70">
+                    {formatRating(product.ratingAvg, product.ratingCount)}
+                  </span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </section>
+
+      <ProductModal
+        open={Boolean(activeProduct)}
+        product={activeProduct}
+        onClose={() => setActiveProduct(null)}
+        onRate={() =>
+          activeProduct && setRatingTarget({ type: 'Product', name: activeProduct.name })
+        }
+      />
+
+      <RatingModal
+        open={Boolean(ratingTarget)}
+        title={ratingTarget ? `Rate ${ratingTarget.type}: ${ratingTarget.name}` : 'Rate'}
+        onClose={() => setRatingTarget(null)}
+        onSubmit={() => setRatingTarget(null)}
+      />
+    </>
+  );
+};

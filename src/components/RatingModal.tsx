@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface RatingModalProps {
@@ -55,10 +56,13 @@ export const RatingModal: React.FC<RatingModalProps> = ({ open, title, onClose, 
               key={star}
               type="button"
               onClick={() => setRating(star)}
-              className={`text-2xl transition-colors ${rating >= star ? 'text-yellow-300' : 'text-white/30'}`}
+              className={`transition-colors ${rating >= star ? 'text-yellow-300' : 'text-white/30'}`}
               aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
             >
-              ★
+              <Star
+                className="h-6 w-6"
+                fill={rating >= star ? 'currentColor' : 'none'}
+              />
             </button>
           ))}
         </div>

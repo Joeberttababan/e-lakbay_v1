@@ -1,7 +1,7 @@
 import React from 'react';
-import { SearchBar } from './SearchBar';
+import { HomepageSearchBar } from './homepage_searchbar';
 
-export const HeroSection: React.FC = () => {
+export const HomepageHeroSection: React.FC = () => {
   return (
     <section className="hero-section-bg relative flex items-center justify-center min-h-screen pt-24 md:pt-28">
       <div className="absolute inset-0 bg-linear-to-b from-black/70 via-black/40 to-transparent" />
@@ -16,7 +16,7 @@ export const HeroSection: React.FC = () => {
           </p>
         </div>
         <div className="mt-7 sm:mt-8 md:mt-10 w-full flex justify-center">
-          <SearchBar />
+          <HomepageSearchBar />
         </div>
       </div>
     </section>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { Cloud, Droplet, MapPin, Star, Sun, Wind } from 'lucide-react';
 
 interface DestinationModalCardProps {
   title: string;
@@ -118,7 +119,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
         label: date.toLocaleDateString(undefined, { weekday: 'short' }),
         temp: `${28 + (index % 3)}°C`,
         condition: index % 2 === 0 ? 'Clouds' : 'Sunny',
-        icon: index % 2 === 0 ? '☁️' : '☀️',
+        icon: index % 2 === 0 ? 'cloud' : 'sun',
       };
     });
   }, []);
@@ -216,7 +217,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
         <div className="glass border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
-              <span>📍</span>
+              <MapPin className="h-4 w-4 text-white/70" />
               <span>{title}</span>
             </div>
             <span className="text-[10px] sm:text-xs text-white/60">{todayLabel}</span>
@@ -225,7 +226,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
           <div className={`${detailsOpen ? 'block' : 'hidden'} lg:block`}>
             <>
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="text-3xl sm:text-7xl">☁️</div>
+                <Cloud className="h-10 w-10 sm:h-16 sm:w-16 text-white/80" />
                 <div>
                   <div className="text-xl sm:text-4xl font-bold">29°C</div>
                   <div className="text-xs sm:text-sm text-white/60">Clouds</div>
@@ -234,11 +235,11 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-white/70">
                 <div className="flex items-center gap-1">
-                  <span className="text-lg sm:text-2xl">💧</span>
+                  <Droplet className="h-4 w-4 sm:h-5 sm:w-5 text-white/70" />
                   <span>Humidity 78%</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-lg sm:text-2xl">💨</span>
+                  <Wind className="h-4 w-4 sm:h-5 sm:w-5 text-white/70" />
                   <span>Wind 12 km/h</span>
                 </div>
               </div>
@@ -252,7 +253,11 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
                       className="min-w-[120px] rounded-xl border border-white/10 bg-white/5 p-3 flex flex-col gap-1"
                     >
                       <span className="text-[10px] sm:text-xs text-white/60">{day.label}</span>
-                      <span className="text-base sm:text-lg">{day.icon}</span>
+                      {day.icon === 'cloud' ? (
+                        <Cloud className="h-5 w-5 text-white/70" />
+                      ) : (
+                        <Sun className="h-5 w-5 text-white/70" />
+                      )}
                       <span className="text-xs sm:text-sm font-semibold">{day.temp}</span>
                       <span className="text-[10px] sm:text-xs text-white/50">{day.condition}</span>
                     </div>
@@ -267,7 +272,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
       {!detailsOpen && (
         <div className="flex items-center justify-between lg:hidden">
           <div className="flex items-center gap-2 text-xs text-yellow-300">
-            <span>★</span>
+            <Star className="h-3.5 w-3.5 text-yellow-300" fill="currentColor" />
             <span className="text-white/70">{formatRating(ratingAvg, ratingCount)}</span>
           </div>
           <button
@@ -284,7 +289,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <h3 className="text-base sm:text-lg font-semibold">{title}</h3>
           <div className="flex items-center gap-2 text-xs sm:text-sm text-yellow-300">
-            <span>★</span>
+            <Star className="h-4 w-4 text-yellow-300" fill="currentColor" />
             <span className="text-white/70">{formatRating(ratingAvg, ratingCount)}</span>
           </div>
         </div>

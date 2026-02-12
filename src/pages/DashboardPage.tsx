@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import type { Profile } from '../components/AuthProvider';
-import { AnalyticsSection } from '../sections/AnalyticsSection';
-import { ProductSection } from '../sections/ProductSection';
-import { DestinationSection } from '../sections/DestinationSection';
+import { DashboardAnalyticsSection } from '../sections/dashboard_analyticssection';
+import { DashboardProductSection } from '../sections/dashboard_productsection';
+import { DashboardDestinationSection } from '../sections/dashboard_destinationsection';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { ProductUploadModal } from '../components/ProductUploadModal';
 import { DestinationUploadModal } from '../components/DestinationUploadModal';
@@ -33,9 +33,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ profile }) => {
         />
 
         <div className="flex-1">
-          <AnalyticsSection displayName={displayName} />
-          <ProductSection userId={user?.id ?? profile?.id ?? null} />
-          <DestinationSection userId={user?.id ?? profile?.id ?? null} />
+          <DashboardAnalyticsSection displayName={displayName} />
+          <DashboardProductSection userId={user?.id ?? profile?.id ?? null} />
+          <DashboardDestinationSection userId={user?.id ?? profile?.id ?? null} />
         </div>
       </div>
 

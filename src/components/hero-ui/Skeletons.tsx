@@ -13,9 +13,17 @@ export const SkeletonList: React.FC<SkeletonListProps> = ({ count, render }) => 
 );
 
 export const ProductTileSkeleton: React.FC = () => (
-  <div className="flex flex-col gap-3">
-    <Skeleton className="aspect-square w-full rounded-2xl" />
-    <Skeleton className="h-3 w-3/4 mx-auto rounded-full" />
+  <div className="rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-4">
+    <div className="relative aspect-square rounded-2xl overflow-hidden">
+      <Skeleton className="h-full w-full rounded-2xl" />
+      <Skeleton className="absolute top-2 right-2 h-9 w-9 rounded-full" />
+      <Skeleton className="absolute bottom-3 left-3 h-4 w-2/3 rounded-full" />
+    </div>
+    <div className="mt-3 flex gap-1">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <Skeleton key={`star-skeleton-${index}`} className="h-3 w-3 rounded-full" />
+      ))}
+    </div>
   </div>
 );
 
@@ -51,7 +59,7 @@ export const DestinationModalCardSkeleton: React.FC = () => (
 
 export const ProductCardSkeleton: React.FC = () => (
   <article className="rounded-2xl p-4 sm:p-5 flex flex-col h-[420px] overflow-hidden">
-    <Skeleton className="flex-[0_0_50%] min-h-[180px] w-full rounded-xl" />
+    <Skeleton className="aspect-[4/3] w-full rounded-xl" />
     <div className="flex flex-1 flex-col gap-3 pt-4">
       <Skeleton className="h-5 w-2/3 rounded-full" />
       <Skeleton className="h-3 w-1/2 rounded-full" />

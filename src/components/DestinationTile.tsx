@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Star } from 'lucide-react';
 import { DestinationModalCard } from './DestinationModalCard';
 
 interface DestinationTileProps {
@@ -59,7 +60,7 @@ export const DestinationTile: React.FC<DestinationTileProps> = ({
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-base font-semibold text-white/90">{title}</h3>
           <div className="flex items-center gap-1 text-xs text-yellow-300">
-            <span>★</span>
+            <Star className="h-3.5 w-3.5 text-yellow-300" fill="currentColor" />
             <span className="text-white/70">{formatRating(ratingAvg, ratingCount)}</span>
           </div>
         </div>
