@@ -32,6 +32,13 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onModeChange }) => {
     setIsSubmitting(false);
   }, [type]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleScroll = () => closeModal();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [open, closeModal]);
+
   const isSignup = type === 'signup';
 
   const primaryLabel = useMemo(() => (isSignup ? 'Create Account' : 'Log In'), [isSignup]);
@@ -86,7 +93,7 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onModeChange }) => {
       role="presentation"
     >
       <div
-        className="glass-secondary rounded-2xl shadow-2xl p-8 w-full max-w-md relative text-white"
+        className="glass-secondary rounded-2xl shadow-2xl p-8 w-full max-w-md relative text-white max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"

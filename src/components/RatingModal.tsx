@@ -22,6 +22,13 @@ export const RatingModal: React.FC<RatingModalProps> = ({ open, title, onClose, 
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleScroll = () => onClose();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
@@ -31,7 +38,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({ open, title, onClose, 
       onClick={onClose}
     >
       <div
-        className="glass-secondary border border-white/20 rounded-2xl shadow-2xl p-6 w-full max-w-lg text-white"
+        className="glass-secondary border border-white/20 rounded-2xl shadow-2xl p-6 w-full max-w-lg text-white max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar"
         role="dialog"
         aria-modal="true"
         aria-labelledby="rating-modal-title"

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { SkeletonList, TopDestinationSkeleton } from '../components/hero-ui/Skeletons';
 import { DestinationModalCard } from '../components/DestinationModalCard';
@@ -41,6 +41,13 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
     postedByImageUrl?: string | null;
   } | null>(null);
   const [ratingTarget, setRatingTarget] = useState<{ id: string; name: string } | null>(null);
+
+  useEffect(() => {
+    if (!activeDestination) return;
+    const handleScroll = () => setActiveDestination(null);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [activeDestination]);
 
   const {
     data: destinations = [],
@@ -211,7 +218,7 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
           onClick={() => setActiveDestination(null)}
         >
           <div
-            className="max-w-5xl w-full"
+            className="max-w-5xl w-full max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar"
             role="dialog"
             aria-modal="true"
             aria-labelledby="top-destination-modal"

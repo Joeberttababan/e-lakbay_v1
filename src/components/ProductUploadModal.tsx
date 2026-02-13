@@ -61,6 +61,13 @@ export const ProductUploadModal: React.FC<ProductUploadModalProps> = ({ open, on
   }, [open]);
 
   useEffect(() => {
+    if (!open) return;
+    const handleScroll = () => onClose();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [open, onClose]);
+
+  useEffect(() => {
     return () => {
       setPreviews((prev) => {
         prev.forEach((url) => URL.revokeObjectURL(url));
@@ -159,7 +166,7 @@ export const ProductUploadModal: React.FC<ProductUploadModalProps> = ({ open, on
       onClick={onClose}
     >
       <div
-        className="glass-secondary border border-white/20 rounded-2xl shadow-2xl p-6 w-full max-w-2xl text-white"
+        className="glass-secondary border border-white/20 rounded-2xl shadow-2xl p-6 w-full max-w-2xl text-white max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar"
         role="dialog"
         aria-modal="true"
         aria-labelledby="product-upload-title"

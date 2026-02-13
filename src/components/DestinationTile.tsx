@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Star } from 'lucide-react';
 import { DestinationModalCard } from './DestinationModalCard';
 
@@ -43,6 +43,13 @@ export const DestinationTile: React.FC<DestinationTileProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const handleScroll = () => setIsModalOpen(false);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isModalOpen]);
+
   const handleTileClick = () => {
     if (enableModal) {
       setIsModalOpen(true);
@@ -86,7 +93,7 @@ export const DestinationTile: React.FC<DestinationTileProps> = ({
             onClick={() => setIsModalOpen(false)}
           >
             <div
-              className="max-w-5xl w-full"
+              className="max-w-5xl w-full max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar"
               role="dialog"
               aria-modal="true"
               aria-labelledby="destinations-modal"

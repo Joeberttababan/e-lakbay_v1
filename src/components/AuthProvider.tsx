@@ -59,6 +59,30 @@ const fetchProfileWithRetry = async (userId: string, attempts = 4) => {
   return null;
 };
 
+const buildProfilePayload = (user: User) => {
+  const metadata = user.user_metadata ?? {};
+  return {
+    id: user.id,
+    full_name: (metadata.full_name as string | undefined) ?? (metadata.name as string | undefined) ?? null,
+    email: user.email ?? null,
+    img_url:
+      (metadata.avatar_url as string | undefined) ??
+      (metadata.picture as string | undefined) ??
+      null,
+  };
+};
+
+const ensureProfile = async (user: User) => {
+  const existing = await fetchProfileWithRetry(user.id);
+  if (existing) return existing;
+
+  const payload = buildProfilePayload(user);
+  const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
+  if (error) throw error;
+
+  return fetchProfileWithRetry(user.id);
+};
+
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -83,7 +107,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
       if (sessionUser) {
         try {
-          const profileData = await fetchProfileWithRetry(sessionUser.id);
+          const profileData = await ensureProfile(sessionUser);
           setProfile(profileData ?? null);
         } catch (error) {
           console.error('Failed to load profile:', error);
@@ -118,7 +142,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
           if (sessionUser) {
             try {
-              const profileData = await fetchProfileWithRetry(sessionUser.id);
+              const profileData = await ensureProfile(sessionUser);
               setProfile(profileData ?? null);
             } catch (error) {
               console.error('Failed to load profile:', error);

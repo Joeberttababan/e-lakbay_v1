@@ -125,7 +125,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   }, []);
 
   return (
-    <article className="glass-secondary border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col gap-5 w-full max-h-[85vh] overflow-y-auto lg:max-h-none lg:overflow-visible">
+    <article className="glass-secondary border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col gap-5 w-full max-h-[85vh] overflow-y-auto hide-scrollbar md:max-h-none md:overflow-visible">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2 text-xs sm:text-sm text-white/70">
           <span className="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-[10px] sm:text-xs font-semibold overflow-hidden">
@@ -293,7 +293,9 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
             <span className="text-white/70">{formatRating(ratingAvg, ratingCount)}</span>
           </div>
         </div>
-        <p className="text-xs sm:text-sm text-white/70 leading-relaxed">{description}</p>
+        <div className="max-h-40 md:max-h-56 overflow-y-auto pr-1">
+          <p className="text-xs sm:text-sm text-white/70 leading-relaxed">{description}</p>
+        </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           {onRate ? (
             <button

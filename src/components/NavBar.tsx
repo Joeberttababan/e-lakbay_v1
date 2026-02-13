@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from './modern-ui/button';
 import { cn } from '../lib/utils';
 import { useModal } from './ModalContext';
@@ -27,6 +27,13 @@ export const NavBar: React.FC<NavBarProps> = ({
   const { openModal } = useModal();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isLogoutOpen) return;
+    const handleScroll = () => setIsLogoutOpen(false);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLogoutOpen]);
 
   const displayName = useMemo(() => {
     return profile?.full_name || profile?.email || 'User';
@@ -203,7 +210,7 @@ export const NavBar: React.FC<NavBarProps> = ({
           onClick={() => setIsLogoutOpen(false)}
         >
           <div
-            className="glass-secondary rounded-2xl shadow-2xl p-6 w-full max-w-sm text-white"
+            className="glass-secondary rounded-2xl shadow-2xl p-6 w-full max-w-sm text-white max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar"
             role="dialog"
             aria-modal="true"
             aria-labelledby="logout-title"

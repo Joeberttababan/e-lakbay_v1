@@ -13,6 +13,7 @@ interface ProductItem {
   name: string;
   description: string | null;
   imageUrl: string | null;
+  imageUrls: string[];
   createdAt: string | null;
   ratingAvg?: number;
   ratingCount?: number;
@@ -27,10 +28,12 @@ export const HomepageProductSection: React.FC = () => {
     id: string;
     name: string;
     imageUrl: string;
+    imageUrls?: string[];
     description?: string | null;
     ratingAvg?: number;
     ratingCount?: number;
     uploaderName?: string;
+    uploaderImageUrl?: string | null;
   } | null>(null);
   const [ratingTarget, setRatingTarget] = useState<{
     type: 'Product' | 'Destination';
@@ -107,6 +110,7 @@ export const HomepageProductSection: React.FC = () => {
             name: row.product_name,
             description: row.description ?? null,
             imageUrl: imageUrls[0] ?? row.image_url ?? null,
+            imageUrls,
             createdAt: row.created_at ?? null,
             ratingAvg,
             ratingCount: rating?.count,
@@ -177,10 +181,12 @@ export const HomepageProductSection: React.FC = () => {
                     id: product.id,
                     name: product.name,
                     imageUrl: product.imageUrl ?? '',
+                    imageUrls: product.imageUrls,
                     description: product.description,
                     ratingAvg: product.ratingAvg,
                     ratingCount: product.ratingCount,
                     uploaderName: product.uploaderName,
+                    uploaderImageUrl: product.uploaderImageUrl,
                   })}
                 className="rounded-xl border border-white/10 bg-white/5 p-1 md:p-2 text-left focus:outline-none focus:ring-2 focus:ring-white/40"
               >
