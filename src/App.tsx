@@ -14,6 +14,7 @@ import loadingVideo from './assets/Loading_chatbot.webm';
 const AppContent: React.FC = () => {
   const [active, setActive] = useState<'login' | 'signup'>('login');
   const { user, profile, loading, signOut } = useAuth();
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [view, setView] = useState<'home' | 'dashboard' | 'destinations' | 'profile' | 'products'>(() => {
     if (typeof window === 'undefined') return 'home';
     const stored = window.localStorage.getItem('elakbay:view');
@@ -69,6 +70,16 @@ const AppContent: React.FC = () => {
       lastScrollKeyRef.current = nextKey;
     }
   }, [view, selectedProfileId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 640);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -153,6 +164,29 @@ const AppContent: React.FC = () => {
         <GlobalModal onModeChange={setActive} />
       </div>
       <SonnerGlobal />
+      <button
+        type="button"
+        aria-label="Scroll to top"
+        onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })}
+        className={`fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-lg transition-all duration-200 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40 ${
+          showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'
+        }`}
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 19V5" />
+          <path d="M5 12l7-7 7 7" />
+        </svg>
+      </button>
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <video

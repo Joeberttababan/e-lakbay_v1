@@ -227,7 +227,7 @@ export const HomepageProductSection: React.FC<HomepageProductSectionProps> = ({
             ))
           )}
         </div>
-        <div className="mt-6 flex flex-row items-center justify-center gap-1 text-sm md:text-base text-white/80">
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-1 text-sm md:text-base text-white/80">
           <p>Want to see more products?</p>
           <button
             type="button"

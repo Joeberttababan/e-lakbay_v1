@@ -231,7 +231,7 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
             )}
           </div>
         </div>
-        <div className="mt-6 flex flex-row items-center justify-center gap-1 text-sm md:text-base text-white/80">
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-1 text-sm md:text-base text-white/80">
           <p>Want to see more destinations?</p>
           <button
             type="button"
