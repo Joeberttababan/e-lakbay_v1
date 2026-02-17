@@ -1,9 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 import { ProductCardSkeleton, SkeletonList } from '../components/ui/Skeletons';
 import { ProductCard } from '../components/ProductCard';
 import { ProductModal } from '../components/ProductModal';
 import { RatingModal } from '../components/RatingModal';
+import { SearchSuggest } from '../components/SearchSuggest';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
 import {
@@ -65,8 +67,10 @@ type ActiveProduct = {
 export const ProductsPage: React.FC<ProductsPageProps> = ({ onBackHome, onViewProfile }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const location = useLocation();
   const [ratingTarget, setRatingTarget] = useState<{ id: string; name: string } | null>(null);
   const [activeProduct, setActiveProduct] = useState<ActiveProduct | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const {
     data: products = [],
@@ -155,8 +159,26 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onBackHome, onViewPr
     },
   });
 
-  const visibleProducts = useMemo(() => products.filter((item) => item.imageUrl), [products]);
+  const visibleProducts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return products.filter((item) => {
+      if (!item.imageUrl) return false;
+      if (!query) return true;
+      const matchesName = item.name.toLowerCase().includes(query);
+      const matchesDescription = item.description?.toLowerCase().includes(query) ?? false;
+      const matchesUploader = item.uploaderName.toLowerCase().includes(query);
+      const matchesMunicipality = item.location?.municipality?.toLowerCase().includes(query) ?? false;
+      const matchesBarangay = item.location?.barangay?.toLowerCase().includes(query) ?? false;
+      return matchesName || matchesDescription || matchesUploader || matchesMunicipality || matchesBarangay;
+    });
+  }, [products, searchQuery]);
   const showProductSkeletons = isProductsPending || (isProductsFetching && products.length === 0);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const query = params.get('q') ?? '';
+    setSearchQuery(query);
+  }, [location.search]);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white pt-12 md:pt-20 pb-12 px-4 sm:px-6 lg:px-10">
@@ -192,6 +214,19 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onBackHome, onViewPr
               Discover locally made products curated for travelers.
             </p>
           </div>
+          <SearchSuggest
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search products, makers, or locations"
+            items={products
+              .filter((item) => item.imageUrl)
+              .map((item) => ({
+                id: item.id,
+                label: item.name,
+                meta: item.uploaderName,
+              }))}
+            className="w-full sm:max-w-sm"
+          />
         </div>
 
         <section className="mt-10">

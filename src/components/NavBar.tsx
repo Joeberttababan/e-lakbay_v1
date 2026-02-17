@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from './modern-ui/button';
 import { cn } from '../lib/utils';
 import { useModal } from './ModalContext';
@@ -27,6 +28,7 @@ export const NavBar: React.FC<NavBarProps> = ({
   onJumpToSection,
 }) => {
   const { openModal } = useModal();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
@@ -52,6 +54,13 @@ export const NavBar: React.FC<NavBarProps> = ({
     onJumpToSection(sectionId);
   };
 
+  const activeHash = location.hash.replace('#', '');
+  const isHome = location.pathname === '/';
+  const isDestinationsActive = location.pathname === '/destinations' || (isHome && activeHash === 'top-destinations');
+  const isProductsActive = location.pathname === '/products' || (isHome && activeHash === 'products');
+  const isMunicipalitiesActive = isHome && activeHash === 'municipalities';
+  const activeLinkClass = 'font-semibold underline underline-offset-4 text-white';
+
   return (
     <nav className="absolute top-0 left-0 z-20 w-full flex items-center justify-between px-4 py-1 md:px-8 md:py-4 text-white">
       {/* Logo */}
@@ -67,21 +76,21 @@ export const NavBar: React.FC<NavBarProps> = ({
         <button
           type="button"
           onClick={() => handleSectionJump('top-destinations')}
-          className="cursor-pointer hover:text-black transition-colors"
+          className={cn('cursor-pointer hover:text-black transition-colors', isDestinationsActive && activeLinkClass)}
         >
           Destinations
         </button>
         <button
           type="button"
           onClick={() => handleSectionJump('municipalities')}
-          className="cursor-pointer hover:text-black transition-colors"
+          className={cn('cursor-pointer hover:text-black transition-colors', isMunicipalitiesActive && activeLinkClass)}
         >
           Municipalities
         </button>
         <button
           type="button"
           onClick={() => handleSectionJump('products')}
-          className="cursor-pointer hover:text-black transition-colors"
+          className={cn('cursor-pointer hover:text-black transition-colors', isProductsActive && activeLinkClass)}
         >
           Products
         </button>
@@ -171,21 +180,30 @@ export const NavBar: React.FC<NavBarProps> = ({
           <button
             type="button"
             onClick={() => handleSectionJump('top-destinations')}
-            className="text-left text-sm font-medium tracking-wide hover:text-black transition-colors"
+            className={cn(
+              'text-left text-sm font-medium tracking-wide hover:text-black transition-colors',
+              isDestinationsActive && 'text-white font-semibold'
+            )}
           >
             Destinations
           </button>
           <button
             type="button"
             onClick={() => handleSectionJump('products')}
-            className="text-left text-sm font-medium tracking-wide hover:text-black transition-colors"
+            className={cn(
+              'text-left text-sm font-medium tracking-wide hover:text-black transition-colors',
+              isProductsActive && 'text-white font-semibold'
+            )}
           >
             Products
           </button>
           <button
             type="button"
             onClick={() => handleSectionJump('municipalities')}
-            className="text-left text-sm font-medium tracking-wide hover:text-black transition-colors"
+            className={cn(
+              'text-left text-sm font-medium tracking-wide hover:text-black transition-colors',
+              isMunicipalitiesActive && 'text-white font-semibold'
+            )}
           >
             Municipalities
           </button>

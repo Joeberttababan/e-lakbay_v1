@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { NavBar } from './components/NavBar';
 import { ModalProvider } from './components/ModalContext';
 import { GlobalModal } from './components/GlobalModal';
@@ -8,68 +9,35 @@ import { HomePage } from './pages/HomePage';
 import { DestinationsPage } from './pages/DestinationsPage';
 import { ProductsPage } from './pages/ProductsPage';
 import ProfilePage from './pages/ProfilePage';
+import NotFoundPage from './pages/NotFoundPage';
 import { SonnerGlobal } from './components/modern-ui/sonner';
 import loadingVideo from './assets/Loading_chatbot.webm';
+
+const ProfileRoute: React.FC<{ onBackHome: () => void }> = ({ onBackHome }) => {
+  const { profileId } = useParams();
+
+  if (!profileId) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <ProfilePage profileId={profileId} onBackHome={onBackHome} />;
+};
 
 const AppContent: React.FC = () => {
   const [active, setActive] = useState<'login' | 'signup'>('login');
   const { user, profile, loading, signOut } = useAuth();
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [view, setView] = useState<'home' | 'dashboard' | 'destinations' | 'profile' | 'products'>(() => {
-    if (typeof window === 'undefined') return 'home';
-    const stored = window.localStorage.getItem('elakbay:view');
-    if (
-      stored === 'home' ||
-      stored === 'dashboard' ||
-      stored === 'destinations' ||
-      stored === 'profile' ||
-      stored === 'products'
-    ) {
-      return stored;
-    }
-    return 'home';
-  });
-  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
-    return window.localStorage.getItem('elakbay:profileId');
-  });
-  const lastScrollKeyRef = useRef<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
   const scrollAttemptRef = useRef(0);
 
   useEffect(() => {
-    if (!user && view === 'dashboard') {
-      setView('home');
-    }
-    if (view === 'profile' && !selectedProfileId) {
-      setView('home');
-    }
-  }, [user, view, selectedProfileId]);
-
-  useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem('elakbay:view', view);
-  }, [view]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (selectedProfileId) {
-      window.localStorage.setItem('elakbay:profileId', selectedProfileId);
-    } else {
-      window.localStorage.removeItem('elakbay:profileId');
-    }
-  }, [selectedProfileId]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const nextKey = `${view}:${selectedProfileId ?? ''}`;
-    if (lastScrollKeyRef.current !== nextKey) {
-      window.requestAnimationFrame(() => {
-        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      });
-      lastScrollKeyRef.current = nextKey;
-    }
-  }, [view, selectedProfileId]);
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    });
+  }, [location.pathname]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -83,7 +51,7 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (view !== 'home' || !pendingScrollId) return;
+    if (location.pathname !== '/' || !pendingScrollId) return;
 
     const tryScroll = () => {
       const target = document.getElementById(pendingScrollId);
@@ -104,13 +72,23 @@ const AppContent: React.FC = () => {
     };
 
     window.setTimeout(tryScroll, 0);
-  }, [view, pendingScrollId]);
+  }, [location.pathname, pendingScrollId]);
+
+  useEffect(() => {
+    if (location.pathname !== '/' || !location.hash) return;
+    const id = location.hash.replace('#', '');
+    if (!id) return;
+    setPendingScrollId(id);
+  }, [location.pathname, location.hash]);
 
   const handleJumpToSection = (sectionId: string) => {
-    if (view !== 'home') {
-      setView('home');
-    }
-    setPendingScrollId(sectionId);
+    const cleanId = sectionId.replace(/^#/, '');
+    navigate({ pathname: '/', hash: `#${cleanId}` });
+    setPendingScrollId(cleanId);
+  };
+
+  const handleViewProfile = (profileId: string) => {
+    navigate(`/profile/${profileId}`);
   };
 
   return (
@@ -122,44 +100,50 @@ const AppContent: React.FC = () => {
             onActiveChange={setActive}
             isAuthenticated={Boolean(user)}
             profile={profile}
-            onDashboard={() => setView('dashboard')}
+            onDashboard={() => navigate('/dashboard')}
             onLogout={signOut}
-            onHome={() => setView('home')}
+            onHome={() => navigate('/')}
             onJumpToSection={handleJumpToSection}
           />
-          {user && view === 'dashboard' ? (
-            <DashboardPage profile={profile} />
-          ) : view === 'profile' && selectedProfileId ? (
-            <ProfilePage
-              profileId={selectedProfileId}
-              onBackHome={() => setView('home')}
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <HomePage
+                  onViewDestinations={() => navigate('/destinations')}
+                  onViewProducts={() => navigate('/products')}
+                  onViewProfile={handleViewProfile}
+                />
+              }
             />
-          ) : view === 'destinations' ? (
-            <DestinationsPage
-              onBackHome={() => setView('home')}
-              onViewProfile={(profileId) => {
-                setSelectedProfileId(profileId);
-                setView('profile');
-              }}
+            <Route
+              path="/destinations"
+              element={
+                <DestinationsPage
+                  onBackHome={() => navigate('/')}
+                  onViewProfile={handleViewProfile}
+                />
+              }
             />
-          ) : view === 'products' ? (
-            <ProductsPage
-              onBackHome={() => setView('home')}
-              onViewProfile={(profileId) => {
-                setSelectedProfileId(profileId);
-                setView('profile');
-              }}
+            <Route
+              path="/products"
+              element={
+                <ProductsPage
+                  onBackHome={() => navigate('/')}
+                  onViewProfile={handleViewProfile}
+                />
+              }
             />
-          ) : (
-            <HomePage
-              onViewDestinations={() => setView('destinations')}
-              onViewProducts={() => setView('products')}
-              onViewProfile={(profileId) => {
-                setSelectedProfileId(profileId);
-                setView('profile');
-              }}
+            <Route
+              path="/profile/:profileId"
+              element={<ProfileRoute onBackHome={() => navigate('/')} />}
             />
-          )}
+            <Route
+              path="/dashboard"
+              element={user ? <DashboardPage profile={profile} /> : <Navigate to="/" replace />}
+            />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
         </div>
         <GlobalModal onModeChange={setActive} />
       </div>

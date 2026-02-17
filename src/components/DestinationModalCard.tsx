@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Cloud, Droplet, MapPin, Star, Sun, Wind } from 'lucide-react';
 import { Avatar } from './Avatar';
 import ViewRoutesModal from './ViewRoutesModal';
@@ -65,6 +65,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [showRoutes, setShowRoutes] = useState(false);
   const hasLocation = Boolean(location && typeof location.lat === 'number' && typeof location.lng === 'number');
+  const swipeStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   const preloadImage = (src: string) =>
     new Promise<void>((resolve) => {
@@ -109,6 +110,34 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
 
   const handleNext = () => {
     runSlide('next');
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    swipeStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      time: performance.now(),
+    };
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    if (!start || images.length <= 1 || isTransitioning || isImageLoading) return;
+
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    const elapsed = performance.now() - start.time;
+
+    if (elapsed > 800) return;
+    if (Math.abs(deltaX) < 50) return;
+    if (Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+
+    if (deltaX > 0) {
+      handlePrev();
+    } else {
+      handleNext();
+    }
   };
 
   const todayLabel = useMemo(
@@ -161,7 +190,14 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
       </header>
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-5">
-        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-white/10">
+        <div
+          className="relative rounded-2xl overflow-hidden border border-white/10 bg-white/10"
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={() => {
+            swipeStartRef.current = null;
+          }}
+        >
           {slideState ? (
             <div
               className="flex w-[200%]"
@@ -204,22 +240,18 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
             <>
               <button
                 type="button"
+                aria-label="Previous image"
                 onClick={handlePrev}
                 disabled={isImageLoading || isTransitioning}
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center hover:bg-black/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Previous image"
-              >
-                <span className="text-lg">‹</span>
-              </button>
+                className="absolute inset-y-0 left-0 w-1/2 cursor-w-resize disabled:cursor-not-allowed"
+              />
               <button
                 type="button"
+                aria-label="Next image"
                 onClick={handleNext}
                 disabled={isImageLoading || isTransitioning}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center hover:bg-black/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Next image"
-              >
-                <span className="text-lg">›</span>
-              </button>
+                className="absolute inset-y-0 right-0 w-1/2 cursor-e-resize disabled:cursor-not-allowed"
+              />
             </>
           )}
           {images.length > 1 && (

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Star } from 'lucide-react';
 import { Avatar } from './Avatar';
 import ViewRoutesModal from './ViewRoutesModal';
@@ -52,6 +52,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [transitionMs, setTransitionMs] = useState(320);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const swipeStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -117,6 +118,42 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     });
   };
 
+  const handlePrev = () => {
+    runSlide('prev');
+  };
+
+  const handleNext = () => {
+    runSlide('next');
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    swipeStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      time: performance.now(),
+    };
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    if (!start || images.length <= 1 || isTransitioning || isImageLoading) return;
+
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    const elapsed = performance.now() - start.time;
+
+    if (elapsed > 800) return;
+    if (Math.abs(deltaX) < 50) return;
+    if (Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+
+    if (deltaX > 0) {
+      handlePrev();
+    } else {
+      handleNext();
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
@@ -132,7 +169,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       >
         <article className="glass-secondary border border-white/10 rounded-2xl p-4 sm:p-6 text-white">
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-5">
-            <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-white/10">
+            <div
+              className="relative rounded-2xl overflow-hidden border border-white/10 bg-white/10"
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={() => {
+                swipeStartRef.current = null;
+              }}
+            >
               {slideState ? (
                 <div
                   className="flex w-[200%]"
@@ -176,22 +220,18 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 <>
                   <button
                     type="button"
-                    onClick={() => runSlide('prev')}
-                    disabled={isImageLoading || isTransitioning}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center hover:bg-black/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Previous image"
-                  >
-                    <span className="text-lg">‹</span>
-                  </button>
+                    onClick={handlePrev}
+                    disabled={isImageLoading || isTransitioning}
+                    className="absolute inset-y-0 left-0 w-1/2 cursor-w-resize disabled:cursor-not-allowed"
+                  />
                   <button
                     type="button"
-                    onClick={() => runSlide('next')}
-                    disabled={isImageLoading || isTransitioning}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center hover:bg-black/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Next image"
-                  >
-                    <span className="text-lg">›</span>
-                  </button>
+                    onClick={handleNext}
+                    disabled={isImageLoading || isTransitioning}
+                    className="absolute inset-y-0 right-0 w-1/2 cursor-e-resize disabled:cursor-not-allowed"
+                  />
                 </>
               )}
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { HomepageHeroSection } from '../sections/homepage_herosection';
 import { HomepageMunicipalitiesSection } from '../sections/homepage_municipalitiessection';
 import { HomepageTopDestinationsSection } from '../sections/homepage_topdestinationssection';
@@ -12,6 +13,7 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onViewDestinations, onViewProducts, onViewProfile }) => {
+  const navigate = useNavigate();
   const shouldReduceMotion = useReducedMotion();
   const sectionMotion = shouldReduceMotion
     ? { initial: false, animate: { opacity: 1 } }
@@ -22,7 +24,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onViewDestinations, onViewPr
       };
   return (
     <>
-      <HomepageHeroSection />
+      <HomepageHeroSection
+        onSearch={(value) => {
+          const query = value.trim();
+          navigate(query ? `/products?q=${encodeURIComponent(query)}` : '/products');
+        }}
+      />
       <main className="bg-slate-950 text-white px-4 sm:px-6 lg:px-10 pb-12">
         <div className="max-w-7xl mx-auto">
           <motion.div {...sectionMotion}>
