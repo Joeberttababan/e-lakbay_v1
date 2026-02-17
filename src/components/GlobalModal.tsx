@@ -26,6 +26,7 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onModeChange }) => {
   const [formState, setFormState] = useState<AuthFormState>(initialFormState);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   useEffect(() => {
     setFormState(initialFormState);
     setFormError(null);
@@ -77,16 +78,38 @@ export const GlobalModal: React.FC<GlobalModalProps> = ({ onModeChange }) => {
     }
   };
 
+  useEffect(() => {
+    if (!open) return;
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const updateKeyboardState = () => {
+      const heightDiff = window.innerHeight - viewport.height;
+      setIsKeyboardOpen(heightDiff > 140);
+    };
+
+    updateKeyboardState();
+    viewport.addEventListener('resize', updateKeyboardState);
+    viewport.addEventListener('scroll', updateKeyboardState);
+    return () => {
+      viewport.removeEventListener('resize', updateKeyboardState);
+      viewport.removeEventListener('scroll', updateKeyboardState);
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      className={`fixed inset-0 z-50 flex justify-center bg-black/50 px-4 overflow-y-auto ${
+        isKeyboardOpen ? 'items-start py-3' : 'items-center py-6'
+      }`}
       onClick={closeModal}
       role="presentation"
     >
       <div
         className="glass-secondary rounded-2xl shadow-2xl p-8 w-full max-w-md relative text-white max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar"
+        style={isKeyboardOpen ? { marginTop: '0.5rem' } : undefined}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"

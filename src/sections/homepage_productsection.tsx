@@ -183,7 +183,7 @@ export const HomepageProductSection: React.FC<HomepageProductSectionProps> = ({
     <>
       <section id="products" className="mt-12">
         <div className="text-center max-w-2xl mx-auto">
-          <h1 className="text-5xl font-extrabold">Local Products</h1>
+          <h1 className="text-3xl md:text-5xl font-extrabold">Local Products</h1>
           <p className="mt-3 text-sm text-white/70">
             "Experience the best of Ilocos Sur's products"
           </p>

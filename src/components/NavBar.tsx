@@ -73,6 +73,13 @@ export const NavBar: React.FC<NavBarProps> = ({
         </button>
         <button
           type="button"
+          onClick={() => handleSectionJump('municipalities')}
+          className="cursor-pointer hover:text-black transition-colors"
+        >
+          Municipalities
+        </button>
+        <button
+          type="button"
           onClick={() => handleSectionJump('products')}
           className="cursor-pointer hover:text-black transition-colors"
         >
@@ -119,7 +126,7 @@ export const NavBar: React.FC<NavBarProps> = ({
       <button
         type="button"
         className="md:hidden inline-flex items-center justify-center rounded-full p-2 text-white/90 hover:text-white hover:bg-white/10 transition-colors"
-        aria-label="Toggle navigation menu"
+        aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
         aria-expanded={isMenuOpen}
         onClick={() => setIsMenuOpen((prev) => !prev)}
       >
@@ -132,11 +139,7 @@ export const NavBar: React.FC<NavBarProps> = ({
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          {isMenuOpen ? (
-            <path d="M18 6L6 18M6 6l12 12" />
-          ) : (
-            <path d="M3 6h18M3 12h18M3 18h18" />
-          )}
+          <path d="M3 6h18M3 12h18M3 18h18" />
         </svg>
       </button>
 
@@ -146,7 +149,25 @@ export const NavBar: React.FC<NavBarProps> = ({
           isMenuOpen ? 'opacity-100 translate-y-0' : 'pointer-events-none opacity-0 -translate-y-2'
         )}
       >
-        <div className="flex flex-col gap-2 px-4 py-4 text-white">
+        <div className="relative flex flex-col gap-2 px-4 py-4 text-white">
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen(false)}
+            className="absolute right-3 top-3 inline-flex items-center justify-center rounded-full p-2 text-white/90 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Close navigation menu"
+          >
+            <svg
+              className="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
           <button
             type="button"
             onClick={() => handleSectionJump('top-destinations')}
