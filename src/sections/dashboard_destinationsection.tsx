@@ -180,6 +180,7 @@ export const DashboardDestinationSection: React.FC<DashboardDestinationSectionPr
                 ratingCount={destination.ratingCount}
                 location={destination.location}
                 onRate={onRate ? () => onRate(destination.name) : undefined}
+                isCard={true}
               />
             </motion.div>
           ))

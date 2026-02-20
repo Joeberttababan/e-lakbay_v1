@@ -39,6 +39,7 @@ interface DestinationModalCardProps {
   onRate?: () => void;
   onProfileClick?: (profileId: string) => void;
   location?: LocationData;
+  isCard?: boolean;
 }
 
 const formatRating = (ratingAvg?: number, ratingCount?: number) => {
@@ -86,6 +87,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   onRate,
   onProfileClick,
   location,
+  isCard = false,
 }) => {
   const images = useMemo(() => {
     if (imageUrls && imageUrls.length > 0) {
@@ -386,7 +388,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   );
 
   return (
-    <article className="glass-secondary border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col w-full h-[72vh] sm:h-[75vh] lg:h-[85vh] overflow-hidden">
+    <article className={`glass-secondary border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col w-full overflow-hidden ${isCard ? 'h-[80vh]' : 'h-[72vh] sm:h-[75vh] lg:h-[85vh]'}`}>
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar flex flex-col gap-2">
         {headerSection}
         {mediaAndWeatherSection}

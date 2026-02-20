@@ -166,7 +166,7 @@ const AppContent: React.FC = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
-        <Footer />
+        {location.pathname !== '/dashboard' && <Footer />}
         <GlobalModal onModeChange={setActive} />
       </div>
       <SonnerGlobal />

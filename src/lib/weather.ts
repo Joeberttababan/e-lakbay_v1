@@ -27,6 +27,46 @@ export interface CurrentWeatherData {
 
 const OPEN_WEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 
+// Weather cache to prevent unnecessary API calls
+interface WeatherCacheEntry {
+  data: CurrentWeatherData;
+  timestamp: number;
+}
+
+const weatherCache = new Map<string, WeatherCacheEntry>();
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+const getCacheKey = (lat?: number, lon?: number, municipality?: string): string => {
+  if (municipality) {
+    return `municipality:${municipality}`;
+  }
+  if (lat !== undefined && lon !== undefined) {
+    return `coords:${lat.toFixed(4)},${lon.toFixed(4)}`;
+  }
+  return '';
+};
+
+const getCachedWeather = (cacheKey: string): CurrentWeatherData | null => {
+  const entry = weatherCache.get(cacheKey);
+  if (!entry) return null;
+
+  const now = Date.now();
+  if (now - entry.timestamp > CACHE_DURATION) {
+    weatherCache.delete(cacheKey);
+    return null;
+  }
+
+  console.log('🌤️ Using cached weather data for:', cacheKey);
+  return entry.data;
+};
+
+const setCachedWeather = (cacheKey: string, data: CurrentWeatherData): void => {
+  weatherCache.set(cacheKey, {
+    data,
+    timestamp: Date.now(),
+  });
+};
+
 const toSentenceCase = (value: string) => {
   if (!value) return value;
   return value.charAt(0).toUpperCase() + value.slice(1);
@@ -40,7 +80,7 @@ const mapCurrentWeatherPayload = (payload: OpenWeatherCurrentResponse): CurrentW
     throw new Error('Weather data is incomplete.');
   }
 
-  return {
+  const weatherData = {
     tempC,
     condition: toSentenceCase(weather?.description || weather?.main || 'Unknown'),
     humidity: typeof payload.main?.humidity === 'number' ? payload.main.humidity : null,
@@ -48,6 +88,17 @@ const mapCurrentWeatherPayload = (payload: OpenWeatherCurrentResponse): CurrentW
     iconCode: weather?.icon || null,
     locationName: payload.name || null,
   };
+
+  // Debug message for weather data
+  console.log('🌤️ Weather API Response:', {
+    location: weatherData.locationName,
+    temperature: `${weatherData.tempC.toFixed(1)}°C`,
+    humidity: weatherData.humidity ? `${weatherData.humidity}%` : 'N/A',
+    wind: weatherData.windKph ? `${weatherData.windKph.toFixed(1)} km/h` : 'N/A',
+    condition: weatherData.condition,
+  });
+
+  return weatherData;
 };
 
 const fetchWeather = async (query: URLSearchParams, signal?: AbortSignal): Promise<CurrentWeatherData> => {
@@ -76,6 +127,10 @@ export const fetchCurrentWeather = async (
   lon: number,
   signal?: AbortSignal,
 ): Promise<CurrentWeatherData> => {
+  const cacheKey = getCacheKey(lat, lon);
+  const cached = getCachedWeather(cacheKey);
+  if (cached) return cached;
+
   const apiKey = getRequiredApiKey();
 
   const query = new URLSearchParams({
@@ -86,7 +141,9 @@ export const fetchCurrentWeather = async (
     lang: 'en',
   });
 
-  return fetchWeather(query, signal);
+  const result = await fetchWeather(query, signal);
+  setCachedWeather(cacheKey, result);
+  return result;
 };
 
 export const fetchCurrentWeatherByMunicipality = async (
@@ -95,6 +152,10 @@ export const fetchCurrentWeatherByMunicipality = async (
   countryCode = 'PH',
   signal?: AbortSignal,
 ): Promise<CurrentWeatherData> => {
+  const cacheKey = getCacheKey(undefined, undefined, municipality);
+  const cached = getCachedWeather(cacheKey);
+  if (cached) return cached;
+
   const apiKey = getRequiredApiKey();
   const locationQuery = [municipality, province, countryCode].filter(Boolean).join(',');
 
@@ -105,5 +166,7 @@ export const fetchCurrentWeatherByMunicipality = async (
     lang: 'en',
   });
 
-  return fetchWeather(query, signal);
+  const result = await fetchWeather(query, signal);
+  setCachedWeather(cacheKey, result);
+  return result;
 };
