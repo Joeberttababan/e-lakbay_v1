@@ -90,7 +90,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({ open, title, onClose, 
           </button>
           <button
             type="button"
-            className="rounded-full bg-white/10 border border-white/20 px-5 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
+            className="rounded-full glass-button px-5 py-2 text-sm font-semibold transition-colors"
             onClick={async () => {
               if (rating === 0) {
                 toast.error('Please select a rating first.');

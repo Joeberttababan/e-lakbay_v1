@@ -42,7 +42,7 @@ export const ImageGalleryContainer: React.FC<ImageGalleryContainerProps> = ({
   onTransitionEnd,
 }) => (
   <div
-    className="relative rounded-2xl overflow-hidden border border-white/10 bg-white/10"
+    className="relative rounded-2xl overflow-hidden glass-card"
     onPointerDown={onPointerDown}
     onPointerUp={onPointerUp}
     onPointerCancel={onPointerCancel}

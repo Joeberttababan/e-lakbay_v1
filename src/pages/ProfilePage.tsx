@@ -262,7 +262,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
   const displayName = profile?.fullName || profile?.email || 'Traveler';
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white pt-12 md:pt-20 pb-12 px-4 sm:px-6 lg:px-10">
+    <main className="min-h-screen bg-background text-foreground pt-12 md:pt-20 pb-12 px-4 sm:px-6 lg:px-10">
       <div className="max-w-6xl mx-auto">
         {onBackHome && (
           <div className="flex justify-start">
@@ -292,7 +292,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
             <ProfileHeaderSkeleton />
           ) : (
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border border-white/20 bg-white/10 overflow-hidden flex items-center justify-center text-lg font-semibold">
+              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border border-border bg-card/60 overflow-hidden flex items-center justify-center text-lg font-semibold">
                 {profile?.imageUrl ? (
                   <img src={profile.imageUrl} alt={displayName} className="h-full w-full object-cover" />
                 ) : (
@@ -301,7 +301,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-semibold">{displayName}</h1>
-                {profile?.battleCry && <p className="text-sm text-white/70 mt-1">{profile.battleCry}</p>}
+                {profile?.battleCry && <p className="text-sm text-muted-foreground mt-1">{profile.battleCry}</p>}
               </div>
             </div>
           )}
@@ -310,7 +310,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
         <section className="mt-10">
           <div className="flex items-center justify-between">
             <h2 className="text-lg sm:text-xl font-semibold">Destinations shared</h2>
-            <span className="text-xs text-white/50">{visibleDestinations.length} entries</span>
+            <span className="text-xs text-muted-foreground">{visibleDestinations.length} entries</span>
           </div>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {showDestinationSkeletons ? (
@@ -332,6 +332,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
                     ratingAvg={destination.ratingAvg}
                     ratingCount={destination.ratingCount}
                     location={destination.location}
+                    className="homepage-card-shadow"
                     showDescription
                     enableModal
                     onRate={() => {
@@ -347,7 +348,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
         <section className="mt-12">
           <div className="flex items-center justify-between">
             <h2 className="text-lg sm:text-xl font-semibold">Products shared</h2>
-            <span className="text-xs text-white/50">{visibleProducts.length} entries</span>
+            <span className="text-xs text-muted-foreground">{visibleProducts.length} entries</span>
           </div>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {showProductSkeletons ? (
@@ -369,6 +370,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
                     ratingAvg={product.ratingAvg}
                     ratingCount={product.ratingCount}
                     location={product.location}
+                    className="homepage-card-shadow"
                     showDescription
                     showMeta
                     onClick={() =>

@@ -184,7 +184,7 @@ export const HomepageProductSection: React.FC<HomepageProductSectionProps> = ({
       <section id="products" className="mt-12">
         <div className="text-center max-w-2xl mx-auto">
           <h1 className="text-3xl md:text-5xl font-extrabold">Local Products</h1>
-          <p className="mt-3 text-sm text-white/70">
+          <p className="mt-3 text-sm text-muted-foreground">
             "Experience the best of Ilocos Sur's products"
           </p>
         </div>
@@ -208,7 +208,7 @@ export const HomepageProductSection: React.FC<HomepageProductSectionProps> = ({
                 location={product.location}
                 onProfileClick={onViewProfile}
                 imageClassName="aspect-[3/4]"
-                className="rounded-bl-2xl rounded-tr-2xl border border-white/10 bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+                className="homepage-card-shadow rounded-bl-2xl rounded-tr-2xl focus:outline-none focus:ring-2 focus:ring-ring"
                 onClick={() =>
                   setActiveProduct({
                     id: product.id,
@@ -227,12 +227,12 @@ export const HomepageProductSection: React.FC<HomepageProductSectionProps> = ({
             ))
           )}
         </div>
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-1 text-sm md:text-base text-white/80">
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-1 text-sm md:text-base text-muted-foreground">
           <p>Want to see more products?</p>
           <button
             type="button"
             onClick={onViewProducts}
-            className="text-white underline underline-offset-4 hover:text-white/70"
+            className="text-foreground underline underline-offset-4 hover:text-muted-foreground"
           >
             Click here to view more
           </button>

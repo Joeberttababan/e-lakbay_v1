@@ -191,7 +191,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onBackHome, onViewPr
   }, [location.search]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white pt-12 md:pt-20 pb-12 px-4 sm:px-6 lg:px-10">
+    <main className="min-h-screen bg-background text-foreground pt-12 md:pt-20 pb-12 px-4 sm:px-6 lg:px-10">
       <div className="max-w-7xl mx-auto">
         {onBackHome && (
           <div className="flex justify-start">
@@ -220,7 +220,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onBackHome, onViewPr
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <h1 className="mt-2 text-3xl sm:text-4xl font-semibold">Products</h1>
-            <p className="mt-2 text-sm text-white/70">
+            <p className="mt-2 text-sm text-muted-foreground">
               Discover locally made products curated for travelers.
             </p>
           </div>
@@ -259,6 +259,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onBackHome, onViewPr
                     location={product.location}
                     showDescription
                     showMeta
+                    className="homepage-card-shadow"
                     onClick={() => {
                       setActiveProduct({
                         id: product.id,

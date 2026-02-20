@@ -174,13 +174,13 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
     <section id="top-destinations" className="mt-12">
       <div className="text-center max-w-2xl mx-auto">
         <h2 className="text-3xl md:text-5xl font-extrabold">Top Destinations</h2>
-        <p className="mt-3 text-sm text-white/70">
+        <p className="mt-3 text-sm text-muted-foreground">
           "Discover the heart of Ilocos Sur — where culture, nature, and history meet."
         </p>
       </div>
 
       <div className="mt-8">
-        <div className="overflow-x-auto hide-scrollbar">
+        <div className="overflow-x-auto overflow-y-visible pb-4 hide-scrollbar">
           <div className="flex gap-5 pr-[12.5%] pl-[12.5%] -ml-[12.5%]">
             {showDestinationSkeletons ? (
               <SkeletonList
@@ -203,7 +203,7 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
                   location={destination.location}
                   imageClassName="aspect-square"
                   showMeta={false}
-                  className="min-w-[90%] sm:min-w-[60%] lg:min-w-[35%] border border-white/10 bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/40"
+                  className="homepage-card-shadow min-w-[90%] sm:min-w-[60%] lg:min-w-[35%] focus:outline-none focus:ring-2 focus:ring-ring"
                   onProfileClick={onViewProfile}
                   onClick={() =>
                     setActiveDestination({
@@ -224,12 +224,12 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
             )}
           </div>
         </div>
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-1 text-sm md:text-base text-white/80">
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-1 text-sm md:text-base text-muted-foreground">
           <p>Want to see more destinations?</p>
           <button
             type="button"
             onClick={onViewMore}
-            className="text-white underline underline-offset-4 hover:text-white/70"
+            className="text-foreground underline underline-offset-4 hover:text-muted-foreground"
           >
             Click here to view more
           </button>

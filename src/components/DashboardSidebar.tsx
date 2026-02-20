@@ -164,7 +164,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         <button
           type="button"
           onClick={() => setIsSidebarOpen(true)}
-          className="lg:hidden fixed left-0 top-1/2 -translate-y-1/2 z-50 h-14 w-7 rounded-r-full bg-black/40 border border-white/20 text-white/80 hover:text-white flex items-center justify-center"
+          className="lg:hidden fixed left-0 top-1/2 -translate-y-1/2 z-50 h-14 w-7 rounded-r-full glass-button border border-border text-foreground hover:text-foreground/80 flex items-center justify-center"
           aria-label="Open sidebar"
         >
           <svg
@@ -189,18 +189,18 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="glass-secondary border border-white/10 rounded-2xl lg:rounded-2xl rounded-l-none p-4 sm:p-5 h-full lg:h-auto lg:sticky top-0 lg:top-24 relative">
-        <div ref={profileCardRef} className="mt-2 glass-secondary border border-white/15 rounded-2xl p-5 relative">
+        <div className="glass-secondary border border-border rounded-2xl lg:rounded-2xl rounded-l-none p-4 sm:p-5 h-full lg:h-auto lg:sticky top-0 lg:top-24 relative text-foreground">
+        <div ref={profileCardRef} className="mt-2 glass-secondary border border-border rounded-2xl p-5 relative">
           <div className="flex flex-col items-center text-center gap-3 mb-4">
             <button
               type="button"
               onClick={handleSelectAvatar}
-              className="h-40 w-40 rounded-full border border-white/20 bg-white/10 overflow-hidden flex items-center justify-center relative group"
+              className="h-40 w-40 rounded-full border border-border bg-card/60 overflow-hidden flex items-center justify-center relative group"
             >
               {displayAvatar ? (
                 <img src={displayAvatar} alt={displayName} className="h-full w-full object-cover" />
               ) : (
-                <span className="text-sm font-semibold text-white/70">Profile</span>
+                <span className="text-sm font-semibold text-muted-foreground">Profile</span>
               )}
               <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                 <svg
@@ -230,7 +230,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           <button
             type="button"
             onClick={() => setIsEditing((prev) => !prev)}
-            className="absolute top-3 right-3 text-white/70 hover:text-white"
+            className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
             aria-label="Edit profile"
           >
             ✎
@@ -238,28 +238,28 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           {!isEditing ? (
             <div>
               <p className="text-sm font-semibold">{displayName}</p>
-              <p className="text-xs text-white/60 mt-1">{battleCry}</p>
+              <p className="text-xs text-muted-foreground mt-1">{battleCry}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1 text-left">
-                <label className="text-xs text-white/60">Name</label>
+                <label className="text-xs text-muted-foreground">Name</label>
                 <input
                   type="text"
                   placeholder="Enter your name"
                   value={nameInput}
                   onChange={(event) => setNameInput(event.target.value)}
-                  className="rounded-lg bg-white/10 border border-white/15 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                  className="rounded-lg bg-background/70 border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
               <div className="flex flex-col gap-1 text-left">
-                <label className="text-xs text-white/60">Battle cry</label>
+                <label className="text-xs text-muted-foreground">Battle cry</label>
                 <input
                   type="text"
                   placeholder="Enter your battle cry"
                   value={battleInput}
                   onChange={(event) => setBattleInput(event.target.value)}
-                  className="rounded-lg bg-white/10 border border-white/15 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                  className="rounded-lg bg-background/70 border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
               {error && (
@@ -271,7 +271,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                 type="button"
                 onClick={handleUpdate}
                 disabled={isSaving}
-                className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors disabled:opacity-60"
+                className="rounded-full glass-button border border-border px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-60"
               >
                 {isSaving ? 'Updating...' : 'Update Profile'}
               </button>
@@ -279,42 +279,42 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           )}
         </div>
 
-        <p className="text-xs uppercase tracking-[0.2em] text-white/60 mt-6">Dashboard</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mt-6">Dashboard</p>
         <nav className="mt-4 flex flex-col gap-2 text-sm">
           <button
             type="button"
             onClick={() => handleSectionJump('analytics-overview')}
-            className="text-left text-white/80 hover:text-white transition-colors"
+            className="text-left text-foreground/80 hover:text-foreground transition-colors"
           >
             Overview
           </button>
           <button
             type="button"
             onClick={() => handleSectionJump('products')}
-            className="text-left text-white/80 hover:text-white transition-colors"
+            className="text-left text-foreground/80 hover:text-foreground transition-colors"
           >
             Products
           </button>
           <button
             type="button"
             onClick={() => handleSectionJump('destinations')}
-            className="text-left text-white/80 hover:text-white transition-colors"
+            className="text-left text-foreground/80 hover:text-foreground transition-colors"
           >
             Destinations
           </button>
         </nav>
 
-        <div className="mt-6 border-t border-white/10 pt-4 flex flex-col gap-3">
+        <div className="mt-6 border-t border-border pt-4 flex flex-col gap-3">
           <button
             type="button"
-            className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
+            className="rounded-full glass-button border border-border px-4 py-2 text-sm font-semibold transition-colors"
             onClick={onOpenProductUpload}
           >
             Upload Product
           </button>
           <button
             type="button"
-            className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
+            className="rounded-full glass-button border border-border px-4 py-2 text-sm font-semibold transition-colors"
             onClick={onOpenDestinationUpload}
           >
             Upload Destination

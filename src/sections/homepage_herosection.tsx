@@ -65,7 +65,7 @@ export const HomepageHeroSection: React.FC<HomepageHeroSectionProps> = ({ onSear
             text="Explore"
             duration={0.6}
             delayMultiple={0.06}
-            className="text-white text-6xl sm:text-7xl md:text-8xl font-semibold leading-tight"
+            className="text-foreground text-6xl sm:text-7xl md:text-8xl font-semibold leading-tight"
           />
 
           {/* Subtitle — fades in after "Explore" finishes (~7 letters × 0.06 + 0.6 ≈ 1.02s) */}
@@ -83,7 +83,7 @@ export const HomepageHeroSection: React.FC<HomepageHeroSectionProps> = ({ onSear
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 1.5 }}
-            className="text-white text-base sm:text-lg md:text-xl mt-4"
+            className="text-foreground text-base sm:text-lg md:text-xl mt-4"
           >
             "Explore, Taste, and Enjoy the culture of every town."
           </motion.p>

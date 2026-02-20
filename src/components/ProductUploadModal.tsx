@@ -236,7 +236,7 @@ export const ProductUploadModal: React.FC<ProductUploadModalProps> = ({ open, on
               <p className="text-xs text-white/60 mb-2">Preview</p>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {previews.map((src, index) => (
-                  <div key={`${src}-${index}`} className="aspect-square rounded-lg overflow-hidden border border-white/10 bg-white/10">
+                  <div key={`${src}-${index}`} className="aspect-square rounded-lg overflow-hidden glass-card">
                     <img src={src} alt="Selected product" className="h-full w-full object-cover" />
                   </div>
                 ))}
@@ -259,7 +259,7 @@ export const ProductUploadModal: React.FC<ProductUploadModalProps> = ({ open, on
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-full bg-white/10 border border-white/20 px-5 py-2 text-sm font-semibold hover:bg-white/20 transition-colors disabled:opacity-60"
+              className="rounded-full glass-button px-5 py-2 text-sm font-semibold transition-colors disabled:opacity-60"
             >
               {isSubmitting ? 'Uploading...' : 'Upload product'}
             </button>

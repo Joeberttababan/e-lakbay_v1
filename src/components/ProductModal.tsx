@@ -213,7 +213,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         <article className="glass-secondary border border-white/10 rounded-2xl p-4 sm:p-6 text-white">
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-5">
             <div
-              className="relative rounded-2xl overflow-hidden border border-white/10 bg-white/10"
+              className="relative rounded-2xl overflow-hidden glass-card"
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
               onPointerCancel={() => {

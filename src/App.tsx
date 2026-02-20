@@ -12,8 +12,9 @@ import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { SonnerGlobal } from './components/modern-ui/sonner';
-import loadingVideo from './assets/Loading_chatbot.webm';
 import Footer from './sections/footer';
+import { ThemeToggle } from './components/ThemeToggle';
+import loadingVideo from './assets/Construction_Animation.webm';
 
 const ProfileRoute: React.FC<{ onBackHome: () => void }> = ({ onBackHome }) => {
   const { profileId } = useParams();
@@ -47,6 +48,7 @@ const AppContent: React.FC = () => {
   const [active, setActive] = useState<'login' | 'signup'>('login');
   const { user, profile, loading, signOut } = useAuth();
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isFooterVisible, setIsFooterVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
@@ -68,6 +70,31 @@ const AppContent: React.FC = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const checkFooterVisibility = () => {
+      const footer = document.querySelector('footer');
+      if (!footer) {
+        setIsFooterVisible(false);
+        return;
+      }
+
+      const footerRect = footer.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      setIsFooterVisible(footerRect.top < windowHeight && footerRect.bottom > 0);
+    };
+
+    checkFooterVisibility();
+    window.addEventListener('scroll', checkFooterVisibility, { passive: true });
+    window.addEventListener('resize', checkFooterVisibility, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', checkFooterVisibility);
+      window.removeEventListener('resize', checkFooterVisibility);
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -174,7 +201,9 @@ const AppContent: React.FC = () => {
         type="button"
         aria-label="Scroll to top"
         onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })}
-        className={`fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-lg transition-all duration-200 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40 ${
+        className={`fixed right-2 md:right-6 z-40 flex h-10 md:h-12 w-10 md:w-12 items-center justify-center rounded-full glass-button text-foreground shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring ${
+          isFooterVisible ? 'bottom-52 md:bottom-44' : 'bottom-6'
+        } ${
           showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'
         }`}
       >
@@ -193,6 +222,7 @@ const AppContent: React.FC = () => {
           <path d="M5 12l7-7 7 7" />
         </svg>
       </button>
+      {location.pathname !== '/dashboard' && <ThemeToggle />}
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <video

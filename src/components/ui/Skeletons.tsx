@@ -13,7 +13,7 @@ export const SkeletonList: React.FC<SkeletonListProps> = ({ count, render }) => 
 );
 
 export const ProductTileSkeleton: React.FC = () => (
-  <div className="rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-4">
+  <div className="rounded-3xl glass-card p-3 sm:p-4">
     <div className="relative aspect-square rounded-2xl overflow-hidden">
       <Skeleton className="h-full w-full rounded-2xl" />
       <Skeleton className="absolute top-2 right-2 h-9 w-9 rounded-full" />

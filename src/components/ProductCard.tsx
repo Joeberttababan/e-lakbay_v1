@@ -58,7 +58,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const shouldShowMeta = Boolean(meta) && showMeta && !uploaderName;
   const shouldShowUploader = Boolean(uploaderName) && showMeta;
   const shouldShowDescription = showDescription && Boolean(description);
-  const cardClassName = `rounded-bl-xl rounded-tr-xl border border-white/10 bg-white/5 ${className ?? ''}`;
+  const cardClassName = `rounded-bl-xl rounded-tr-xl glass-card ${className ?? ''}`;
   const cardImageClassName = `relative overflow-hidden rounded-bl-xl rounded-tr-xl ${imageClassName ?? 'aspect-square'}`;
 
   const content = (
@@ -76,7 +76,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       {(shouldShowUploader || shouldShowMeta || shouldShowDescription || onRate || hasLocation) && (
         <div className="px-3 pb-3 pt-2">
           {shouldShowUploader && (
-            <div className="flex items-center gap-2 text-xs text-white/70">
+            <div className="flex items-center gap-2 text-xs text-white/80">
               <Avatar
                 name={uploaderName as string}
                 imageUrl={uploaderImageUrl ?? undefined}
@@ -118,9 +118,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               )}
             </div>
           )}
-          {shouldShowMeta && <p className="text-xs text-white/60">{meta}</p>}
+          {shouldShowMeta && <p className="text-xs text-white/80">{meta}</p>}
           {shouldShowDescription && (
-            <p className="mt-2 text-sm text-white/70 leading-relaxed line-clamp-2">{description}</p>
+            <p className="mt-2 text-sm text-white/90 leading-relaxed line-clamp-2">{description}</p>
           )}
           {(onRate || hasLocation) && (
             <div className="mt-3 flex flex-wrap justify-end gap-2">
@@ -131,7 +131,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                       event.stopPropagation();
                       setShowRoutes(true);
                     }}
-                    className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors cursor-pointer"
+                    className="rounded-full glass-button px-4 py-2 text-sm font-semibold transition-colors cursor-pointer"
                   >
                     View Routes
                   </span>
@@ -142,7 +142,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                       event.stopPropagation();
                       setShowRoutes(true);
                     }}
-                    className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
+                    className="rounded-full glass-button px-4 py-2 text-sm font-semibold transition-colors"
                   >
                     View Routes
                   </button>
@@ -155,7 +155,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                       event.stopPropagation();
                       onRate();
                     }}
-                    className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors cursor-pointer"
+                    className="rounded-full glass-button px-4 py-2 text-sm font-semibold transition-colors cursor-pointer"
                   >
                     Rate
                   </span>
@@ -166,7 +166,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                       event.stopPropagation();
                       onRate();
                     }}
-                    className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
+                    className="rounded-full glass-button px-4 py-2 text-sm font-semibold transition-colors"
                   >
                     Rate
                   </button>

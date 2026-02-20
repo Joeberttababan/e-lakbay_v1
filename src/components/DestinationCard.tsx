@@ -67,11 +67,11 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
 
   const shouldShowMeta = Boolean(postedBy) && showMeta;
   const shouldShowDescription = showDescription && Boolean(description);
-  const cardClassName = `rounded-bl-xl rounded-tr-xl border border-white/10 bg-white/5 ${className ?? ''}`;
+  const cardClassName = `rounded-bl-xl rounded-tr-xl glass-card ${className ?? ''}`;
   const cardImageClassName = `relative overflow-hidden rounded-bl-xl rounded-tr-xl ${imageClassName ?? 'aspect-[4/3]'}`;
 
   const content = (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full text-white">
       <div className={cardImageClassName}>
         <img src={imageUrl} alt={title} className="h-full w-full object-cover" />
         <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-xs text-white">
@@ -101,9 +101,9 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
       </div>
       {(shouldShowMeta || shouldShowDescription) && (
         <div className="px-4 pb-4 pt-3">
-          {shouldShowMeta && <p className="text-xs text-white/60">{postedBy}</p>}
+          {shouldShowMeta && <p className="text-xs text-white/80">{postedBy}</p>}
           {shouldShowDescription && (
-            <p className="mt-2 text-sm text-white/70 leading-relaxed line-clamp-3">{description}</p>
+            <p className="mt-2 text-sm text-white/90 leading-relaxed line-clamp-3">{description}</p>
           )}
         </div>
       )}

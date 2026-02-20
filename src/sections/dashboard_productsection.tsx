@@ -148,7 +148,7 @@ export const DashboardProductSection: React.FC<DashboardProductSectionProps> = (
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-2xl font-semibold">Products</h2>
-          <p className="text-sm text-white/60">Featured items curated for travelers.</p>
+          <p className="text-sm text-muted-foreground">Featured items curated for travelers.</p>
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -168,6 +168,7 @@ export const DashboardProductSection: React.FC<DashboardProductSectionProps> = (
                 ratingAvg={product.ratingAvg}
                 ratingCount={product.ratingCount}
                 location={product.location}
+                className="homepage-card-shadow"
                 showDescription
                 onRate={onRate ? () => onRate(product.name) : undefined}
               />

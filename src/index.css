@@ -123,6 +123,32 @@
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
   }
+  .glass-card {
+    background-color: rgba(15, 23, 42, 0.35);
+    border: 1px solid rgba(71, 85, 105, 0.35);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+  .dark .glass-card {
+    background-color: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+  }
+  .glass-button {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+  .glass-button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+  .dark .glass-button {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .dark .glass-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -158,11 +184,17 @@
   }
   .municipalities-fade::before {
     left: 0;
-    background: linear-gradient(to right, rgba(2, 6, 23, 0.98), rgba(2, 6, 23, 0));
+    background: linear-gradient(to right, var(--background), transparent);
   }
   .municipalities-fade::after {
     right: 0;
-    background: linear-gradient(to left, rgba(2, 6, 23, 0.98), rgba(2, 6, 23, 0));
+    background: linear-gradient(to left, var(--background), transparent);
+  }
+  .homepage-card-shadow {
+    box-shadow: -10px 10px 10px rgba(147, 152, 158, 0.884);
+  }
+  .dark .homepage-card-shadow {
+    box-shadow: -10px 10px 10px rgba(78, 80, 85, 0.596);
   }
 }
 
@@ -186,14 +218,14 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: oklch(0.975 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.98 0 0);
+  --primary-foreground: oklch(0.22 0.02 74);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -227,14 +259,14 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.270 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.76 0.05 74);
+  --primary-foreground: oklch(0.22 0.02 74);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
