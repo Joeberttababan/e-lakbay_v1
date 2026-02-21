@@ -60,10 +60,10 @@ export const HomepageMunicipalitiesSection: React.FC<HomepageMunicipalitiesSecti
   }
 
   return (
-    <section id="municipalities" className=" text-foreground py-5 md:py-10 -mx-4 sm:-mx-6 lg:-mx-10">
-      <div className="overflow-hidden municipalities-fade">
+    <section id="municipalities" className=" text-foreground py-5 md:py-10 relative left-1/2 w-screen -ml-[50vw] -mr-[50vw]">
+      <div className="overflow-hidden ">
         <div className="municipalities-marquee">
-          <div className="municipalities-track px-1 sm:px-2">
+          <div className="municipalities-track gap-8 px-1 sm:px-2">
             {showProfileSkeletons ? (
               <SkeletonList
                 count={12}
@@ -75,16 +75,16 @@ export const HomepageMunicipalitiesSection: React.FC<HomepageMunicipalitiesSecti
                   key={`${profile.id}-${index}`}
                   type="button"
                   onClick={() => onSelectProfile?.(profile.id)}
-                  className="flex flex-col items-center gap-1 text-center min-w-[72px]"
+                  className="flex flex-col items-center gap-1 text-center w-[60px] md:w-[112px]"
                 >
-                  <div className="h-12 md:h-28 w-12 md:w-28 rounded-full border border-border bg-background overflow-hidden flex items-center justify-center text-sm md:text-3xl font-extrabold text-foreground">
+                  <div className="h-20 md:h-28 w-20 md:w-28 rounded-full border border-border bg-background overflow-hidden flex items-center justify-center text-sm md:text-3xl font-extrabold text-foreground">
                     {profile.imageUrl ? (
                       <img src={profile.imageUrl} alt={profile.name} className="h-full w-full object-cover" />
                     ) : (
                       profile.name.charAt(0).toUpperCase()
                     )}
                   </div>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground leading-tight line-clamp-2 md:p-1">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground leading-tight line-clamp-2 break-words w-full">
                     {profile.name.toUpperCase()}
                   </span>
                 </button>

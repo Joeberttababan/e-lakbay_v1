@@ -73,6 +73,13 @@ const getWeatherIcon = (condition?: string) => {
   return Cloud;
 };
 
+const toTitleCase = (value: string) =>
+  value
+    .trim()
+    .split(/\s+/)
+    .map((word) => (word ? word[0].toUpperCase() + word.slice(1).toLowerCase() : word))
+    .join(' ');
+
 export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   title,
   description,
@@ -89,6 +96,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   location,
   isCard = false,
 }) => {
+  const formattedTitle = useMemo(() => toTitleCase(title), [title]);
   const images = useMemo(() => {
     if (imageUrls && imageUrls.length > 0) {
       return imageUrls;
@@ -282,6 +290,18 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   );
 
   const WeatherIcon = getWeatherIcon(weather?.condition);
+  const weatherAddressLabel = useMemo(() => {
+    const formattedBarangay = location?.barangay ? toTitleCase(location.barangay) : '';
+    const formattedMunicipality = location?.municipality ? toTitleCase(location.municipality) : '';
+
+    const addressParts = [formattedBarangay, formattedMunicipality].filter(Boolean);
+
+    if (addressParts.length > 0) {
+      return addressParts.join(', ');
+    }
+
+    return formattedTitle;
+  }, [formattedTitle, location?.barangay, location?.municipality]);
 
   const headerSection = (
     <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -312,7 +332,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)] gap-5">
       <ImageGalleryContainer
         images={images}
-        title={title}
+        title={formattedTitle}
         activeIndex={activeIndex}
         slideState={slideState}
         offsetPercent={offsetPercent}
@@ -340,7 +360,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
 
       <WeatherContainer
         detailsOpen={detailsOpen}
-        title={title}
+        locationLabel={weatherAddressLabel}
         todayLabel={todayLabel}
         weatherLoading={weatherLoading}
         weather={weather}
@@ -368,7 +388,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   const descriptionSection = (
     <DescriptionContainer
       detailsOpen={detailsOpen}
-      title={title}
+      title={formattedTitle}
       ratingLabel={formatRating(ratingAvg, ratingCount)}
       description={description}
     />
@@ -388,7 +408,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   );
 
   return (
-    <article className={`glass-secondary modal-stone-text border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col w-full overflow-hidden ${isCard ? 'h-[80vh]' : 'h-[72vh] sm:h-[75vh] lg:h-[85vh]'}`}>
+    <article className={`glass-secondary modal-stone-text border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col w-full overflow-hidden ${isCard ? 'h-[60vh]' : 'h-[65vh] sm:h-[55vh] md:h-[75vh] lg:h-[65vh]'}`}>
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar flex flex-col gap-2">
         {headerSection}
         {mediaAndWeatherSection}

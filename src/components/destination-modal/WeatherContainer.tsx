@@ -4,7 +4,7 @@ import type { CurrentWeatherData } from '../../lib/weather';
 
 interface WeatherContainerProps {
   detailsOpen: boolean;
-  title: string;
+  locationLabel: string;
   todayLabel: string;
   weatherLoading: boolean;
   weather: CurrentWeatherData | null;
@@ -13,7 +13,7 @@ interface WeatherContainerProps {
 
 export const WeatherContainer: React.FC<WeatherContainerProps> = ({
   detailsOpen,
-  title,
+  locationLabel,
   todayLabel,
   weatherLoading,
   weather,
@@ -23,7 +23,7 @@ export const WeatherContainer: React.FC<WeatherContainerProps> = ({
     <div className="flex items-start justify-between">
       <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
         <MapPin className="h-4 w-4 modal-stone-muted" />
-        <span>{title}</span>
+        <span>{locationLabel}</span>
       </div>
       <span className="text-[10px] sm:text-xs modal-stone-muted">{todayLabel}</span>
     </div>

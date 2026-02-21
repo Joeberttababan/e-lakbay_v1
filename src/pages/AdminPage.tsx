@@ -195,13 +195,13 @@ const AdminPage: React.FC = () => {
 
   return (
     <main className="min-h-screen bg-slate-950 text-white px-6 pt-18 md:pt-24 pb-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="relative left-1/2 w-screen -ml-[50vw] p-1 md:p-8">
         <p className="text-xs uppercase tracking-[0.2em] text-white/40">Admin</p>
         <h1 className="mt-3 text-3xl sm:text-4xl font-semibold">Developer Console</h1>
 
 
         <motion.section
-          className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-6"
+          className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-3 md:p-6"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: 'easeOut' }}
@@ -221,7 +221,7 @@ const AdminPage: React.FC = () => {
                   label: profile.full_name || profile.email || profile.id,
                   meta: profile.role ?? 'tourist',
                 }))}
-                className="w-full sm:max-w-xs [&>div]:px-3 [&>div]:py-2 [&>div]:gap-2 [&_input]:text-sm [&_input]:px-1"
+                className="w-full max-w-xl [&>div]:px-3 [&>div]:py-2 [&>div]:gap-2 [&_input]:text-sm [&_input]:px-1"
               />
               <div className="flex items-center justify-between gap-2 text-xs text-white/60 sm:justify-end">
                 <span>Rows</span>

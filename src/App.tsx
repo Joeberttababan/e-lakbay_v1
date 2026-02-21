@@ -194,7 +194,7 @@ const AppContent: React.FC = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
-        {location.pathname !== '/dashboard' && <Footer onOpenComingSoon={() => setIsComingSoonOpen(true)} />}
+        {location.pathname !== '/dashboard' && location.pathname !== '/admin' && <Footer onOpenComingSoon={() => setIsComingSoonOpen(true)} />}
         <GlobalModal onModeChange={setActive} />
       </div>
       <SonnerGlobal />

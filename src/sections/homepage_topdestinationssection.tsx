@@ -171,7 +171,7 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
     isDestinationsPending || (isDestinationsFetching && destinations.length === 0);
 
   return (
-    <section id="top-destinations" className="mt-12">
+    <section id="top-destinations" className=" relative left-1/2 w-screen -ml-[50vw] md:w-[90vw] md:-ml-[45vw]">
       <div className="text-center max-w-2xl mx-auto">
         <h2 className="text-3xl md:text-5xl font-extrabold">Top Destinations</h2>
         <p className="mt-3 text-sm text-muted-foreground">
@@ -180,8 +180,8 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
       </div>
 
       <div className="mt-8">
-        <div className="overflow-x-auto overflow-y-visible pb-4 hide-scrollbar">
-          <div className="flex gap-5 pr-[12.5%] pl-[12.5%] -ml-[12.5%]">
+        <div className="overflow-auto pt-3 hide-scrollbar">
+          <div className="pb-8 flex gap-5 pr-[12.5%] pl-[15.5%] -ml-[12.5%]">
             {showDestinationSkeletons ? (
               <SkeletonList
                 count={4}
@@ -224,7 +224,7 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
             )}
           </div>
         </div>
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-1 text-sm md:text-base text-muted-foreground">
+        <div className=" flex flex-col sm:flex-row items-center justify-center gap-1 text-sm md:text-base text-muted-foreground">
           <p>Want to see more destinations?</p>
           <button
             type="button"
