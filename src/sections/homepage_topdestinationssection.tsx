@@ -7,6 +7,7 @@ import { DestinationCard } from '../components/DestinationCard';
 import { useAuth } from '../components/AuthProvider';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
+import { trackContentView } from '../lib/analytics';
 
 interface DestinationItem {
   id: string;
@@ -144,20 +145,21 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
           } as DestinationItem;
         });
 
-        const sorted = [...mapped].sort((a, b) => {
-          const aRated = typeof a.ratingAvg === 'number';
-          const bRated = typeof b.ratingAvg === 'number';
-          if (aRated && bRated) {
+        const ratedOnly = mapped.filter(
+          (item) => item.imageUrl && typeof item.ratingAvg === 'number' && (item.ratingCount ?? 0) > 0,
+        );
+
+        const sorted = [...ratedOnly].sort((a, b) => {
+          if ((b.ratingAvg ?? 0) !== (a.ratingAvg ?? 0)) {
             return (b.ratingAvg ?? 0) - (a.ratingAvg ?? 0);
           }
-          if (aRated) return -1;
-          if (bRated) return 1;
-          const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return bDate - aDate;
+          if ((b.ratingCount ?? 0) !== (a.ratingCount ?? 0)) {
+            return (b.ratingCount ?? 0) - (a.ratingCount ?? 0);
+          }
+          return a.name.localeCompare(b.name);
         });
 
-        return sorted.slice(0, 10);
+        return sorted.slice(0, 8);
       } catch (error) {
         console.error('Failed to load destinations:', error);
         toast.error('Failed to load destinations.');
@@ -166,7 +168,7 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
     },
   });
 
-  const visibleDestinations = useMemo(() => destinations.filter((item) => item.imageUrl), [destinations]);
+  const visibleDestinations = useMemo(() => destinations, [destinations]);
   const showDestinationSkeletons =
     isDestinationsPending || (isDestinationsFetching && destinations.length === 0);
 
@@ -206,19 +208,28 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
                   className="min-w-[90%] sm:min-w-[60%] lg:min-w-[35%] focus:outline-none focus:ring-2 focus:ring-ring"
                   onProfileClick={onViewProfile}
                   onClick={() =>
-                    setActiveDestination({
-                      id: destination.id,
-                      name: destination.name,
-                      imageUrl: destination.imageUrl ?? '',
-                      imageUrls: destination.imageUrls,
-                      description: destination.description,
-                      ratingAvg: destination.ratingAvg,
-                      ratingCount: destination.ratingCount,
-                      postedByName: destination.postedByName,
-                      postedByImageUrl: destination.postedByImageUrl,
-                      postedById: destination.postedById,
-                      location: destination.location,
-                    })}
+                    {
+                      void trackContentView({
+                        contentType: 'destination',
+                        contentId: destination.id,
+                        ownerId: destination.postedById ?? null,
+                        userId: user?.id ?? null,
+                        pagePath: '/',
+                      });
+                      setActiveDestination({
+                        id: destination.id,
+                        name: destination.name,
+                        imageUrl: destination.imageUrl ?? '',
+                        imageUrls: destination.imageUrls,
+                        description: destination.description,
+                        ratingAvg: destination.ratingAvg,
+                        ratingCount: destination.ratingCount,
+                        postedByName: destination.postedByName,
+                        postedByImageUrl: destination.postedByImageUrl,
+                        postedById: destination.postedById,
+                        location: destination.location,
+                      });
+                    }}
                 />
               ))
             )}

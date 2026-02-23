@@ -18,6 +18,7 @@ import {
   BreadcrumbSeparator,
 } from '../components/modern-ui/breadcrumb';
 import { useAuth } from '../components/AuthProvider';
+import { trackContentView, trackFilterUsage, trackSearchPerformed } from '../lib/analytics';
 
 interface ProductsPageProps {
   onBackHome?: () => void;
@@ -190,6 +191,30 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onBackHome, onViewPr
     setSearchQuery(query);
   }, [location.search]);
 
+  useEffect(() => {
+    if (isProductsPending || isProductsFetching) return;
+    const query = searchQuery.trim();
+    if (!query) return;
+
+    void trackSearchPerformed({
+      query,
+      scope: 'products',
+      resultCount: visibleProducts.length,
+      userId: user?.id ?? null,
+      pagePath: '/products',
+      filters: { filter_name: 'search_query' },
+    });
+
+    void trackFilterUsage({
+      scope: 'products',
+      filterName: 'search_query',
+      filterValue: query,
+      userId: user?.id ?? null,
+      pagePath: '/products',
+      filters: { active_query: query },
+    });
+  }, [isProductsPending, isProductsFetching, searchQuery, visibleProducts.length, user?.id]);
+
   return (
     <main className="min-h-screen text-foreground pt-12 md:pt-20 pb-12 px-4 sm:px-6 lg:px-10">
       <div className="max-w-7xl mx-auto">
@@ -260,6 +285,13 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onBackHome, onViewPr
                     showDescription
                     showMeta
                     onClick={() => {
+                      void trackContentView({
+                        contentType: 'product',
+                        contentId: product.id,
+                        ownerId: product.uploaderId ?? null,
+                        userId: user?.id ?? null,
+                        pagePath: '/products',
+                      });
                       setActiveProduct({
                         id: product.id,
                         name: product.name,

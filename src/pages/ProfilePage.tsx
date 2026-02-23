@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion, useReducedMotion, easeOut } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DestinationTileSkeleton, ProfileHeaderSkeleton, ProductCardSkeleton, SkeletonList } from '../components/ui/Skeletons';
@@ -8,6 +8,8 @@ import { ProductModal } from '../components/ProductModal';
 import { RatingModal } from '../components/RatingModal';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
+import { trackProfileView } from '../lib/analytics';
+import { useAuth } from '../components/AuthProvider';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -83,10 +85,15 @@ type ActiveProduct = {
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome }) => {
   const shouldReduceMotion = useReducedMotion();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [destinationRatingTarget, setDestinationRatingTarget] = useState<{ id: string; name: string } | null>(null);
   const [productRatingTarget, setProductRatingTarget] = useState<{ id: string; name: string } | null>(null);
   const [activeProduct, setActiveProduct] = useState<ActiveProduct | null>(null);
+
+  useEffect(() => {
+    void trackProfileView({ profileId, userId: user?.id ?? null });
+  }, [profileId, user?.id]);
   
   const getItemMotion = (index: number) =>
     shouldReduceMotion

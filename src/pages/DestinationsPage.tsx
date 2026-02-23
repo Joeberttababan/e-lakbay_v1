@@ -9,6 +9,7 @@ import { SearchSuggest } from '../components/SearchSuggest';
 import { useAuth } from '../components/AuthProvider';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
+import { trackContentView, trackFilterUsage, trackSearchPerformed } from '../lib/analytics';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -171,6 +172,30 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome, 
     setSearchQuery(query);
   }, [location.search]);
 
+  useEffect(() => {
+    if (isDestinationsPending || isDestinationsFetching) return;
+    const query = searchQuery.trim();
+    if (!query) return;
+
+    void trackSearchPerformed({
+      query,
+      scope: 'destinations',
+      resultCount: visibleDestinations.length,
+      userId: user?.id ?? null,
+      pagePath: '/destinations',
+      filters: { filter_name: 'search_query' },
+    });
+
+    void trackFilterUsage({
+      scope: 'destinations',
+      filterName: 'search_query',
+      filterValue: query,
+      userId: user?.id ?? null,
+      pagePath: '/destinations',
+      filters: { active_query: query },
+    });
+  }, [isDestinationsPending, isDestinationsFetching, searchQuery, visibleDestinations.length, user?.id]);
+
   return (
     <main className="min-h-screen text-foreground pt-12 md:pt-20 pb-12 px-4 sm:px-6 lg:px-10">
       <div className="max-w-7xl mx-auto">
@@ -243,6 +268,15 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome, 
                     location={destination.location}
                     showDescription
                     enableModal
+                    onModalOpen={() => {
+                      void trackContentView({
+                        contentType: 'destination',
+                        contentId: destination.id,
+                        ownerId: destination.postedById ?? null,
+                        userId: user?.id ?? null,
+                        pagePath: '/destinations',
+                      });
+                    }}
                     onProfileClick={onViewProfile}
                     onRate={() => {
                       if (!user) {

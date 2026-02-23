@@ -7,6 +7,7 @@ import { ProductCard } from '../components/ProductCard';
 import { useAuth } from '../components/AuthProvider';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'sonner';
+import { trackContentView } from '../lib/analytics';
 
 interface ProductItem {
   id: string;
@@ -151,20 +152,21 @@ export const HomepageProductSection: React.FC<HomepageProductSectionProps> = ({
           } as ProductItem;
         });
 
-        const sorted = [...mapped].sort((a, b) => {
-          const aRated = typeof a.ratingAvg === 'number';
-          const bRated = typeof b.ratingAvg === 'number';
-          if (aRated && bRated) {
+        const ratedOnly = mapped.filter(
+          (item) => item.imageUrl && typeof item.ratingAvg === 'number' && (item.ratingCount ?? 0) > 0,
+        );
+
+        const sorted = [...ratedOnly].sort((a, b) => {
+          if ((b.ratingAvg ?? 0) !== (a.ratingAvg ?? 0)) {
             return (b.ratingAvg ?? 0) - (a.ratingAvg ?? 0);
           }
-          if (aRated) return -1;
-          if (bRated) return 1;
-          const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return bDate - aDate;
+          if ((b.ratingCount ?? 0) !== (a.ratingCount ?? 0)) {
+            return (b.ratingCount ?? 0) - (a.ratingCount ?? 0);
+          }
+          return a.name.localeCompare(b.name);
         });
 
-        return sorted.slice(0, 12);
+        return sorted.slice(0, 8);
       } catch (error) {
         console.error('Failed to load products:', error);
         toast.error('Failed to load products.');
@@ -174,7 +176,7 @@ export const HomepageProductSection: React.FC<HomepageProductSectionProps> = ({
   });
 
   const visibleProducts = useMemo(
-    () => localProducts.filter((item) => item.imageUrl),
+    () => localProducts,
     [localProducts],
   );
   const showProductSkeletons = isProductsPending || (isProductsFetching && localProducts.length === 0);
@@ -191,7 +193,7 @@ export const HomepageProductSection: React.FC<HomepageProductSectionProps> = ({
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
           {showProductSkeletons ? (
             <SkeletonList
-              count={12}
+              count={8}
               render={(index) => <ProductTileSkeleton key={`product-skeleton-${index}`} />}
             />
           ) : (
@@ -210,19 +212,28 @@ export const HomepageProductSection: React.FC<HomepageProductSectionProps> = ({
                 imageClassName="aspect-[3/4]"
                 className="rounded-bl-2xl rounded-tr-2xl focus:outline-none focus:ring-2 focus:ring-ring"
                 onClick={() =>
-                  setActiveProduct({
-                    id: product.id,
-                    name: product.name,
-                    imageUrl: product.imageUrl ?? '',
-                    imageUrls: product.imageUrls,
-                    description: product.description,
-                    ratingAvg: product.ratingAvg,
-                    ratingCount: product.ratingCount,
-                    uploaderName: product.uploaderName,
-                    uploaderImageUrl: product.uploaderImageUrl,
-                    uploaderId: product.uploaderId,
-                    location: product.location,
-                  })}
+                  {
+                    void trackContentView({
+                      contentType: 'product',
+                      contentId: product.id,
+                      ownerId: product.uploaderId ?? null,
+                      userId: user?.id ?? null,
+                      pagePath: '/',
+                    });
+                    setActiveProduct({
+                      id: product.id,
+                      name: product.name,
+                      imageUrl: product.imageUrl ?? '',
+                      imageUrls: product.imageUrls,
+                      description: product.description,
+                      ratingAvg: product.ratingAvg,
+                      ratingCount: product.ratingCount,
+                      uploaderName: product.uploaderName,
+                      uploaderImageUrl: product.uploaderImageUrl,
+                      uploaderId: product.uploaderId,
+                      location: product.location,
+                    });
+                  }}
               />
             ))
           )}

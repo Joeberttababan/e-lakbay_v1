@@ -23,6 +23,7 @@ interface DestinationCardProps {
   enableModal?: boolean;
   onRate?: () => void;
   onClick?: () => void;
+  onModalOpen?: () => void;
   onProfileClick?: (profileId: string) => void;
   showEditControl?: boolean;
 }
@@ -56,6 +57,7 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
   enableModal = false,
   onRate,
   onClick,
+  onModalOpen,
   onProfileClick,
   showEditControl = false,
 }) => {
@@ -63,6 +65,7 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
 
   const handleCardClick = () => {
     if (enableModal) {
+      onModalOpen?.();
       setIsModalOpen(true);
       return;
     }
