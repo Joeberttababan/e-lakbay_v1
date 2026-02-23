@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Star } from 'lucide-react';
+import { Pencil, Star } from 'lucide-react';
 import { Avatar } from './Avatar';
+import { useAuth } from './AuthProvider';
 import ViewRoutesModal from './ViewRoutesModal';
 import type { LocationData } from '../lib/locationTypes';
 import { preloadImageUrl } from '../lib/imagePreloadCache';
@@ -25,6 +26,15 @@ interface ProductModalProps {
   } | null;
   onRate?: () => void;
   onProfileClick?: (profileId: string) => void;
+  showEditControl?: boolean;
+  onEditRequest?: (product: {
+    id: string;
+    name: string;
+    imageUrl: string;
+    imageUrls?: string[];
+    description?: string | null;
+    location?: LocationData;
+  }) => void;
 }
 
 export const ProductModal: React.FC<ProductModalProps> = ({
@@ -33,17 +43,23 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   product,
   onRate,
   onProfileClick,
+  showEditControl = false,
+  onEditRequest,
 }) => {
   if (!open || !product) return null;
+
+  const { user } = useAuth();
   const [showRoutes, setShowRoutes] = useState(false);
-  const hasLocation = Boolean(product.location && typeof product.location.lat === 'number' && typeof product.location.lng === 'number');
+  const [localProduct, setLocalProduct] = useState(product);
+  const hasLocation = Boolean(localProduct.location && typeof localProduct.location.lat === 'number' && typeof localProduct.location.lng === 'number');
+  const canEdit = Boolean(showEditControl && user?.id && localProduct.uploaderId && user.id === localProduct.uploaderId);
 
   const images = useMemo(() => {
-    if (product.imageUrls && product.imageUrls.length > 0) {
-      return product.imageUrls;
+    if (localProduct.imageUrls && localProduct.imageUrls.length > 0) {
+      return localProduct.imageUrls;
     }
-    return [product.imageUrl];
-  }, [product.imageUrl, product.imageUrls]);
+    return [localProduct.imageUrl];
+  }, [localProduct.imageUrl, localProduct.imageUrls]);
   const galleryKey = useMemo(() => images.join('|'), [images]);
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -61,6 +77,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   useEffect(() => {
     if (!open) return;
+    setLocalProduct(product);
     setActiveIndex(0);
     setSlideState(null);
     setOffsetPercent(0);
@@ -68,7 +85,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     setIsImageLoading(false);
     setIsGalleryReady(false);
     setShowRoutes(false);
-  }, [open, product.id]);
+  }, [open, product]);
 
   const formatRating = (ratingAvg?: number, ratingCount?: number) => {
     if (!ratingAvg || Number.isNaN(ratingAvg)) {
@@ -162,11 +179,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   };
 
   const handlePrev = () => {
-    runSlide('prev');
+    void runSlide('prev');
   };
 
   const handleNext = () => {
-    runSlide('next');
+    void runSlide('next');
   };
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -198,182 +215,215 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
-      role="presentation"
-      onClick={onClose}
-    >
+    <>
       <div
-        className="max-w-5xl w-full"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="product-modal-title"
-        onClick={(event) => event.stopPropagation()}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+        role="presentation"
+        onClick={onClose}
       >
-        <article className="glass-secondary modal-stone-text border border-white/10 rounded-2xl p-4 sm:p-6">
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-5">
-            <div
-              className="relative rounded-2xl overflow-hidden glass-card"
-              onPointerDown={handlePointerDown}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={() => {
-                swipeStartRef.current = null;
-              }}
-            >
-              <img
-                src={images[activeIndex]}
-                alt={product.name}
-                className="h-64 sm:h-80 md:h-[520px] w-full object-cover"
-                loading="eager"
-                decoding="sync"
-              />
+        <div
+          className="max-w-5xl w-full"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="product-modal-title"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <article className="glass-secondary modal-stone-text border border-white/10 rounded-2xl p-4 sm:p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-5">
+              <div
+                className="relative rounded-2xl overflow-hidden glass-card h-64 sm:h-80 md:h-150"
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={() => {
+                  swipeStartRef.current = null;
+                }}
+              >
+                <img
+                  src={images[activeIndex]}
+                  alt={localProduct.name}
+                  className={`h-64 sm:h-80 md:h-150 w-full object-contain ${slideState ? 'hidden' : ''}`}
+                  loading="eager"
+                  decoding="sync"
+                />
 
-              {slideState && (
-                <div
-                  className="absolute inset-0 flex w-[200%]"
-                  style={{
-                    transform: `translateX(-${offsetPercent}%)`,
-                    transition: isTransitioning ? `transform ${transitionMs}ms ease` : 'none',
-                  }}
-                  onTransitionEnd={(event) => {
-                    if (event.target !== event.currentTarget) return;
-                    if (!slideState) return;
-                    setActiveIndex(slideState.direction === 'next' ? slideState.to : slideState.from);
-                    setSlideState(null);
-                    setIsTransitioning(false);
-                    setIsImageLoading(false);
-                    setOffsetPercent(0);
-                  }}
-                >
-                  <div className="w-1/2">
-                    <img
-                      src={images[slideState.from]}
-                      alt={product.name}
-                      className="h-64 sm:h-80 md:h-[520px] w-full object-cover"
-                      loading="eager"
-                      decoding="sync"
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <img
-                      src={images[slideState.to]}
-                      alt={product.name}
-                      className="h-64 sm:h-80 md:h-[520px] w-full object-cover"
-                      loading="eager"
-                      decoding="sync"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {isImageLoading && (
-                <div className="absolute inset-0 bg-black/25 pointer-events-none" />
-              )}
-
-              {images.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    aria-label="Previous image"
-                    onClick={handlePrev}
-                    disabled={isImageLoading || isTransitioning}
-                    className="absolute inset-y-0 left-0 w-1/2 cursor-w-resize disabled:cursor-not-allowed"
-                  />
-                  <button
-                    type="button"
-                    aria-label="Next image"
-                    onClick={handleNext}
-                    disabled={isImageLoading || isTransitioning}
-                    className="absolute inset-y-0 right-0 w-1/2 cursor-e-resize disabled:cursor-not-allowed"
-                  />
-                </>
-              )}
-
-              {images.length > 1 && (
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-black/40 px-3 py-1">
-                  {images.map((_, index) => (
-                    <span
-                      key={`dot-${index}`}
-                      className={`h-2 w-2 rounded-full ${index === activeIndex ? 'bg-white' : 'bg-white/40'}`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-3 sm:gap-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl sm:text-3xl font-semibold" id="product-modal-title">
-                    {product.name}
-                  </h2>
-                  {product.uploaderName && (
-                    <div className="mt-2 flex items-center gap-2 text-xs sm:text-sm modal-stone-muted">
-                      <Avatar
-                        name={product.uploaderName}
-                        imageUrl={product.uploaderImageUrl}
-                        sizeClassName="h-7 w-7"
-                        onClick={
-                          product.uploaderId && onProfileClick
-                            ? () => onProfileClick(product.uploaderId as string)
-                            : undefined
-                        }
+                {slideState && (
+                  <div
+                    className="absolute inset-0 flex w-[200%]"
+                    style={{
+                      transform: `translateX(-${offsetPercent}%)`,
+                      transition: isTransitioning ? `transform ${transitionMs}ms ease` : 'none',
+                    }}
+                    onTransitionEnd={(event) => {
+                      if (event.target !== event.currentTarget) return;
+                      if (!slideState) return;
+                      setActiveIndex(slideState.direction === 'next' ? slideState.to : slideState.from);
+                      setSlideState(null);
+                      setIsTransitioning(false);
+                      setIsImageLoading(false);
+                      setOffsetPercent(0);
+                    }}
+                  >
+                    <div className="w-1/2">
+                      <img
+                        src={images[slideState.from]}
+                        alt={localProduct.name}
+                        className="h-64 sm:h-80 md:h-150 w-full object-contain"
+                        loading="eager"
+                        decoding="sync"
                       />
-                      {product.uploaderId && onProfileClick ? (
-                        <button
-                          type="button"
-                          onClick={() => onProfileClick(product.uploaderId as string)}
-                          className="hover:underline hover:underline-offset-4"
-                        >
-                          {product.uploaderName}
-                        </button>
-                      ) : (
-                        <span>{product.uploaderName}</span>
-                      )}
                     </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-yellow-300">
-                  <Star className="h-4 w-4" fill="currentColor" />
-                  <span className="modal-stone-muted">{formatRating(product.ratingAvg, product.ratingCount)}</span>
-                </div>
-              </div>
+                    <div className="w-1/2">
+                      <img
+                        src={images[slideState.to]}
+                        alt={localProduct.name}
+                        className="h-64 sm:h-80 md:h-150 w-full object-contain"
+                        loading="eager"
+                        decoding="sync"
+                      />
+                    </div>
+                  </div>
+                )}
 
-              <div className="max-h-40 md:max-h-96 overflow-y-auto pr-1">
-                <p className="text-sm sm:text-base modal-stone-muted leading-relaxed">
-                  {product.description || 'A locally crafted product from Ilocos Sur.'}
-                </p>
-              </div>
+                {isImageLoading && (
+                  <div className="absolute inset-0 bg-black/25 pointer-events-none" />
+                )}
 
-              {(onRate || hasLocation) && (
-                <div className="mt-auto flex flex-wrap justify-end gap-2">
-                  {hasLocation && (
+                {images.length > 1 && (
+                  <>
                     <button
                       type="button"
-                      onClick={() => setShowRoutes(true)}
-                      className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
-                    >
-                      View Routes
-                    </button>
-                  )}
-                  {onRate && (
+                      aria-label="Previous image"
+                      onClick={handlePrev}
+                      disabled={isImageLoading || isTransitioning}
+                      className="absolute inset-y-0 left-0 w-1/2 cursor-w-resize disabled:cursor-not-allowed"
+                    />
                     <button
                       type="button"
-                      onClick={onRate}
-                      className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
-                    >
-                      Rate
-                    </button>
-                  )}
+                      aria-label="Next image"
+                      onClick={handleNext}
+                      disabled={isImageLoading || isTransitioning}
+                      className="absolute inset-y-0 right-0 w-1/2 cursor-e-resize disabled:cursor-not-allowed"
+                    />
+                  </>
+                )}
+
+                {images.length > 1 && (
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-black/40 px-3 py-1">
+                    {images.map((_, index) => (
+                      <span
+                        key={`dot-${index}`}
+                        className={`h-2 w-2 rounded-full ${index === activeIndex ? 'bg-white' : 'bg-white/40'}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-3 sm:gap-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-semibold" id="product-modal-title">
+                      {localProduct.name}
+                    </h2>
+                    {localProduct.uploaderName && (
+                      <div className="mt-2 flex items-center gap-2 text-xs sm:text-base modal-stone-muted">
+                        <Avatar
+                          name={localProduct.uploaderName}
+                          imageUrl={localProduct.uploaderImageUrl}
+                          sizeClassName="h-7 w-7"
+                          onClick={
+                            localProduct.uploaderId && onProfileClick
+                              ? () => onProfileClick(localProduct.uploaderId as string)
+                              : undefined
+                          }
+                        />
+                        <div className="flex flex-row gap-0.5">
+                          {localProduct.location?.barangay ? (
+                            <span className="text-white/60">
+                              {[localProduct.location?.barangay]
+                                .filter(Boolean)
+                                .join(', ')}
+                            </span>
+                          ) : null}
+                          {localProduct.uploaderId && onProfileClick ? (
+                            <button
+                              type="button"
+                              onClick={() => onProfileClick(localProduct.uploaderId as string)}
+                              className="hover:underline hover:underline-offset-4 text-white"
+                            >
+                              {localProduct.uploaderName}
+                            </button>
+                          ) : (
+                            <span className="text-white">{localProduct.uploaderName}</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-yellow-300">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4" fill="currentColor" />
+                      <span className="modal-stone-muted">{formatRating(localProduct.ratingAvg, localProduct.ratingCount)}</span>
+                    </div>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onEditRequest?.({
+                            id: localProduct.id,
+                            name: localProduct.name,
+                            imageUrl: localProduct.imageUrl,
+                            imageUrls: localProduct.imageUrls,
+                            description: localProduct.description,
+                            location: localProduct.location,
+                          });
+                        }}
+                        className="rounded-full bg-white/10 border border-white/20 p-2 text-white hover:bg-white/20 transition-colors"
+                        aria-label="Open edit mode"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              )}
+
+                <div className="max-h-40 md:max-h-5/6 overflow-y-auto pr-1">
+                  <p className="text-sm sm:text-base modal-stone-muted leading-relaxed">
+                    {localProduct.description || 'A locally crafted product from Ilocos Sur.'}
+                  </p>
+                </div>
+
+                {(onRate || hasLocation) && (
+                  <div className="mt-auto flex flex-wrap justify-end gap-2">
+                    {hasLocation && (
+                      <button
+                        type="button"
+                        onClick={() => setShowRoutes(true)}
+                        className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
+                      >
+                        View Routes
+                      </button>
+                    )}
+                    {onRate && (
+                      <button
+                        type="button"
+                        onClick={onRate}
+                        className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
+                      >
+                        Rate
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </article>
+          </article>
+        </div>
+        {showRoutes && localProduct.location && (
+          <ViewRoutesModal destination={localProduct.location} onClose={() => setShowRoutes(false)} />
+        )}
       </div>
-      {showRoutes && product.location && (
-        <ViewRoutesModal destination={product.location} onClose={() => setShowRoutes(false)} />
-      )}
-    </div>
+    </>
   );
 };

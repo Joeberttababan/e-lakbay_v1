@@ -9,13 +9,17 @@ import { toast } from 'sonner';
 interface DashboardProductSectionProps {
   onRate?: (name: string) => void;
   userId?: string | null;
+  onOpenProduct?: (product: ProductItem) => void;
 }
 interface ProductItem {
   id: string;
   name: string;
   uploaderName: string;
+  uploaderId?: string | null;
+  uploaderImageUrl?: string | null;
   description: string | null;
   imageUrl: string | null;
+  imageUrls?: string[];
   createdAt: string | null;
   ratingAvg?: number;
   ratingCount?: number;
@@ -28,7 +32,7 @@ interface ProductItem {
   };
 }
 
-export const DashboardProductSection: React.FC<DashboardProductSectionProps> = ({ onRate, userId }) => {
+export const DashboardProductSection: React.FC<DashboardProductSectionProps> = ({ onRate, userId, onOpenProduct }) => {
   const shouldReduceMotion = useReducedMotion();
   const getItemMotion = (index: number) =>
     shouldReduceMotion
@@ -36,7 +40,7 @@ export const DashboardProductSection: React.FC<DashboardProductSectionProps> = (
       : {
           initial: { opacity: 0, y: 10 },
           animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.35, ease: 'easeOut', delay: index * 0.04 },
+          transition: { duration: 0.35, ease: 'easeOut' as const, delay: index * 0.04 },
         };
   const {
     data: products = [],
@@ -91,11 +95,11 @@ export const DashboardProductSection: React.FC<DashboardProductSectionProps> = (
           new Set((productRows ?? []).map((row) => row.user_id).filter(Boolean)),
         ) as string[];
 
-        const profilesById = new Map<string, { full_name?: string | null; email?: string | null }>();
+        const profilesById = new Map<string, { full_name?: string | null; email?: string | null; img_url?: string | null }>();
         if (userIds.length > 0) {
           const { data: profileRows, error: profileError } = await supabase
             .from('profiles')
-            .select('id, full_name, email')
+            .select('id, full_name, email, img_url')
             .in('id', userIds);
 
           if (profileError) {
@@ -118,8 +122,11 @@ export const DashboardProductSection: React.FC<DashboardProductSectionProps> = (
             id: row.id,
             name: row.product_name,
             uploaderName,
+            uploaderId: typedRow.user_id ?? null,
+            uploaderImageUrl: profile?.img_url ?? null,
             description: row.description ?? null,
             imageUrl: imageUrls[0] ?? row.image_url ?? null,
+            imageUrls,
             createdAt: row.created_at ?? null,
             ratingAvg,
             ratingCount: rating?.count,
@@ -169,6 +176,7 @@ export const DashboardProductSection: React.FC<DashboardProductSectionProps> = (
                 ratingCount={product.ratingCount}
                 location={product.location}
                 showDescription
+                onClick={() => onOpenProduct?.(product)}
                 onRate={onRate ? () => onRate(product.name) : undefined}
               />
             </motion.div>

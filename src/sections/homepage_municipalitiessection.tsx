@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ProfileChipSkeleton, SkeletonList } from '../components/ui/Skeletons';
 import { supabase } from '../lib/supabaseClient';
@@ -17,6 +17,10 @@ interface HomepageMunicipalitiesSectionProps {
 export const HomepageMunicipalitiesSection: React.FC<HomepageMunicipalitiesSectionProps> = ({
   onSelectProfile,
 }) => {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const isAdjustingScrollRef = useRef(false);
+  const [isPaused, setIsPaused] = useState(false);
+
   const {
     data: profiles = [],
     isPending: isProfilesPending,
@@ -55,15 +59,94 @@ export const HomepageMunicipalitiesSection: React.FC<HomepageMunicipalitiesSecti
 
   const showProfileSkeletons = isProfilesPending || (isProfilesFetching && profiles.length === 0);
 
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller || showProfileSkeletons || profiles.length === 0) {
+      return;
+    }
+
+    const singleTrackWidth = scroller.scrollWidth / 2;
+    if (singleTrackWidth > 0) {
+      scroller.scrollLeft = singleTrackWidth;
+    }
+  }, [profiles.length, showProfileSkeletons]);
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller || showProfileSkeletons || profiles.length === 0) {
+      return;
+    }
+
+    let frameId = 0;
+    let lastTimestamp = 0;
+    const speedPxPerMs = 0.06;
+
+    const animate = (timestamp: number) => {
+      if (!lastTimestamp) {
+        lastTimestamp = timestamp;
+      }
+
+      if (!isPaused) {
+        const elapsed = timestamp - lastTimestamp;
+        const singleTrackWidth = scroller.scrollWidth / 2;
+
+        if (singleTrackWidth > 0) {
+          scroller.scrollLeft += elapsed * speedPxPerMs;
+
+          if (scroller.scrollLeft >= singleTrackWidth * 2 - scroller.clientWidth) {
+            scroller.scrollLeft -= singleTrackWidth;
+          }
+        }
+      }
+
+      lastTimestamp = timestamp;
+      frameId = window.requestAnimationFrame(animate);
+    };
+
+    frameId = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [isPaused, profiles.length, showProfileSkeletons]);
+
+  const handleScrollerScroll = () => {
+    const scroller = scrollerRef.current;
+    if (!scroller || isAdjustingScrollRef.current) {
+      return;
+    }
+
+    const singleTrackWidth = scroller.scrollWidth / 2;
+    if (singleTrackWidth <= 0) {
+      return;
+    }
+
+    if (scroller.scrollLeft <= 1) {
+      isAdjustingScrollRef.current = true;
+      scroller.scrollLeft += singleTrackWidth;
+      isAdjustingScrollRef.current = false;
+    } else if (scroller.scrollLeft >= singleTrackWidth * 2 - scroller.clientWidth - 1) {
+      isAdjustingScrollRef.current = true;
+      scroller.scrollLeft -= singleTrackWidth;
+      isAdjustingScrollRef.current = false;
+    }
+  };
+
   if (!showProfileSkeletons && loopProfiles.length === 0) {
     return null;
   }
 
   return (
     <section id="municipalities" className=" text-foreground py-5 md:py-10 relative left-1/2 w-screen -ml-[50vw] -mr-[50vw]">
-      <div className="overflow-hidden ">
-        <div className="municipalities-marquee">
-          <div className="municipalities-track gap-8 px-1 sm:px-2">
+      <div className="px-3 sm:px-4">
+        <div
+          ref={scrollerRef}
+          className="hide-scrollbar overflow-x-auto px-1 sm:px-2 touch-pan-x"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onTouchStart={() => setIsPaused(true)}
+          onTouchEnd={() => setIsPaused(false)}
+          onTouchCancel={() => setIsPaused(false)}
+          onScroll={handleScrollerScroll}
+        >
+          <div className="flex w-max gap-8 px-1 sm:px-2">
             {showProfileSkeletons ? (
               <SkeletonList
                 count={12}
@@ -75,7 +158,7 @@ export const HomepageMunicipalitiesSection: React.FC<HomepageMunicipalitiesSecti
                   key={`${profile.id}-${index}`}
                   type="button"
                   onClick={() => onSelectProfile?.(profile.id)}
-                  className="flex flex-col items-center gap-1 text-center w-[60px] md:w-[112px]"
+                  className="flex flex-col items-center gap-1 text-center w-15 md:w-28"
                 >
                   <div className="h-20 md:h-28 w-20 md:w-28 rounded-full border border-border bg-background overflow-hidden flex items-center justify-center text-sm md:text-3xl font-extrabold text-foreground">
                     {profile.imageUrl ? (
@@ -84,7 +167,7 @@ export const HomepageMunicipalitiesSection: React.FC<HomepageMunicipalitiesSecti
                       profile.name.charAt(0).toUpperCase()
                     )}
                   </div>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground leading-tight line-clamp-2 break-words w-full">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground leading-tight line-clamp-2 wrap-break-word w-full">
                     {profile.name.toUpperCase()}
                   </span>
                 </button>

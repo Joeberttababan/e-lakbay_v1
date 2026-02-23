@@ -153,8 +153,13 @@
     display: flex;
     width: max-content;
     animation: municipalities-scroll 25s linear infinite;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
   }
   .municipalities-marquee:hover .municipalities-track {
+    animation-play-state: paused;
+  }
+  .municipalities-marquee.is-paused .municipalities-track {
     animation-play-state: paused;
   }
 }

@@ -230,6 +230,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({ onBackHome, 
               visibleDestinations.map((destination, index) => (
                 <motion.div key={destination.id} {...getItemMotion(index)}>
                   <DestinationCard
+                    id={destination.id}
                     title={destination.name}
                     description={destination.description ?? 'A featured destination from Ilocos Sur.'}
                     imageUrl={destination.imageUrl ?? ''}

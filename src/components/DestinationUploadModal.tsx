@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthProvider';
 import LocationPickerMap from './LocationPickerMap';
@@ -8,6 +10,22 @@ import { toast } from 'sonner';
 interface DestinationUploadModalProps {
   open: boolean;
   onClose: () => void;
+  mode?: 'create' | 'edit';
+  destinationId?: string;
+  initialData?: {
+    name: string;
+    description?: string | null;
+    imageUrl?: string | null;
+    imageUrls?: string[];
+    location?: LocationData;
+  } | null;
+  onSuccess?: (updated?: {
+    name: string;
+    description?: string | null;
+    imageUrl?: string | null;
+    imageUrls?: string[];
+    location?: LocationData;
+  }) => void;
 }
 
 const MAX_IMAGES = 20;
@@ -37,12 +55,21 @@ const uploadImages = async (files: File[], folder: string) => {
   return urls;
 };
 
-export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ open, onClose }) => {
+export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({
+  open,
+  onClose,
+  mode = 'create',
+  destinationId,
+  initialData,
+  onSuccess,
+}) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [destinationName, setDestinationName] = useState('');
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [description, setDescription] = useState('');
   const [files, setFiles] = useState<File[]>([]);
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,6 +80,22 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
       setLocationData(null);
       setDescription('');
       setFiles([]);
+      setExistingImageUrls([]);
+      setPreviews((prev) => {
+        prev.forEach((url) => URL.revokeObjectURL(url));
+        return [];
+      });
+      setError(null);
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (mode === 'edit' && initialData) {
+      setDestinationName(initialData.name ?? '');
+      setDescription(initialData.description ?? '');
+      setLocationData(initialData.location ?? null);
+      setFiles([]);
+      setExistingImageUrls(initialData.imageUrls ?? (initialData.imageUrl ? [initialData.imageUrl] : []));
       setPreviews((prev) => {
         prev.forEach((url) => URL.revokeObjectURL(url));
         return [];
@@ -60,7 +103,7 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
       setError(null);
       setIsSubmitting(false);
     }
-  }, [open]);
+  }, [initialData, mode, open]);
 
   useEffect(() => {
     return () => {
@@ -112,8 +155,13 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
       return;
     }
 
-    if (files.length === 0) {
+    if (mode === 'create' && files.length === 0) {
       setError('Please select at least one image.');
+      return;
+    }
+
+    if (mode === 'edit' && existingImageUrls.length === 0 && files.length === 0) {
+      setError('Please keep at least one image.');
       return;
     }
 
@@ -121,7 +169,10 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
     setIsSubmitting(true);
 
     try {
-      const imageUrls = await uploadImages(files, `destinations/${destinationName.trim()}`);
+      const fallbackImageUrls = existingImageUrls;
+      const imageUrls = files.length > 0
+        ? [...fallbackImageUrls, ...(await uploadImages(files, `destinations/${destinationName.trim()}`))]
+        : fallbackImageUrls;
       const basePayload = {
         destination_name: destinationName.trim(),
         description: description.trim() || null,
@@ -139,6 +190,47 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
         image_urls: imageUrls,
       } as typeof basePayload & { image_urls?: string[] };
 
+      if (mode === 'edit') {
+        let { error: updateError } = await supabase
+          .from('destinations')
+          .update(payloadWithArray)
+          .eq('id', destinationId ?? '')
+          .eq('user_id', user?.id ?? '');
+
+        if (updateError && updateError.message.includes('image_urls')) {
+          const retry = await supabase
+            .from('destinations')
+            .update(basePayload)
+            .eq('id', destinationId ?? '')
+            .eq('user_id', user?.id ?? '');
+          updateError = retry.error ?? null;
+        }
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        const updated = {
+          name: basePayload.destination_name,
+          description: basePayload.description,
+          imageUrl: basePayload.image_url,
+          imageUrls,
+          location: {
+            municipality: basePayload.municipality,
+            barangay: basePayload.barangay,
+            lat: basePayload.latitude,
+            lng: basePayload.longitude,
+            address: basePayload.address,
+          } as LocationData,
+        };
+
+        toast.success('Destination updated successfully.');
+        await queryClient.invalidateQueries({ queryKey: ['destinations'] });
+        onSuccess?.(updated);
+        onClose();
+        return;
+      }
+
       let { error: insertError } = await supabase.from('destinations').insert(payloadWithArray);
 
       if (insertError && insertError.message.includes('image_urls')) {
@@ -151,6 +243,8 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
       }
 
       toast.success('Destination uploaded successfully.');
+      await queryClient.invalidateQueries({ queryKey: ['destinations'] });
+      onSuccess?.();
       onClose();
     } catch (uploadError) {
       const message = uploadError instanceof Error ? uploadError.message : 'Upload failed. Please try again.';
@@ -163,14 +257,14 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
 
   if (!open) return null;
 
-  return (
+  const modalContent = (
     <div
       className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-4"
       role="presentation"
       onClick={onClose}
     >
       <div
-        className="glass-secondary modal-stone-text border border-white/20 rounded-2xl p-6 w-full max-w-2xl h-[85vh] md:h-[80vh] max-h-[85vh] md:max-h-[80vh] overflow-y-auto hide-scrollbar"
+        className="glass-secondary modal-stone-text border border-white/20 rounded-2xl p-3 md:p-6 w-full max-w-4xl h-[85vh] md:h-[80vh] max-h-[85vh] md:max-h-[80vh] overflow-y-auto hide-scrollbar"
         role="dialog"
         aria-modal="true"
         aria-labelledby="destination-upload-title"
@@ -179,7 +273,7 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-semibold" id="destination-upload-title">Destination Upload</h2>
-            <p className="text-sm modal-stone-muted">Add new destinations with visuals.</p>
+            <p className="text-sm modal-stone-muted">{mode === 'edit' ? 'Update your uploaded destination.' : 'Add new destinations with visuals.'}</p>
           </div>
           <button
             type="button"
@@ -203,7 +297,7 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
           </div>
           <div className="flex flex-col gap-2 sm:col-span-2">
             <label className="text-sm modal-stone-muted">Location</label>
-            <LocationPickerMap onLocationConfirmed={setLocationData} hideIntro />
+            <LocationPickerMap onLocationConfirmed={setLocationData} initialLocation={locationData} hideIntro defaultPinMapOpen={false} />
             {locationData && (
               <p className="text-xs modal-stone-muted">
                 Location: {locationData.barangay ?? 'Unknown'}, {locationData.municipality ?? 'Unknown'}
@@ -221,23 +315,50 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
             />
           </div>
           <div className="flex flex-col gap-2 sm:col-span-2">
-            <label className="text-sm modal-stone-muted">Image upload</label>
+            <label htmlFor="destination-upload-images" className="text-sm modal-stone-muted">Image upload</label>
             <input
+              id="destination-upload-images"
               type="file"
               multiple
               accept="image/*"
               onChange={handleFilesChange}
-              className="rounded-lg bg-white/10 border border-white/15 px-4 py-2 text-sm modal-stone-text file:mr-3 file:rounded-full file:border-0 file:bg-white/20 file:px-3 file:py-1 file:text-xs file:text-stone-700"
+              className="rounded-lg bg-white/10 border border-white/15 px-4 py-2 text-sm modal-stone-text file:mr-3 file:rounded-full file:border-0 file:bg-white/20 file:px-3 file:py-1 file:text-xs file:text-white"
             />
             <p className="text-xs modal-stone-soft">{previewCountLabel}</p>
           </div>
-          {previews.length > 0 && (
+          {(existingImageUrls.length > 0 || previews.length > 0) && (
             <div className="sm:col-span-2">
               <p className="text-xs modal-stone-muted mb-2">Preview</p>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {existingImageUrls.map((src, index) => (
+                  <div key={`existing-${src}-${index}`} className="relative aspect-square rounded-lg overflow-hidden border border-white/10 bg-white/10">
+                    <img src={src} alt="Existing destination" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setExistingImageUrls((prev) => prev.filter((_, i) => i !== index))}
+                      className="absolute top-1 right-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
                 {previews.map((src, index) => (
-                  <div key={`${src}-${index}`} className="aspect-square rounded-lg overflow-hidden border border-white/10 bg-white/10">
+                  <div key={`new-${src}-${index}`} className="relative aspect-square rounded-lg overflow-hidden border border-white/10 bg-white/10">
                     <img src={src} alt="Selected destination" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFiles((prev) => prev.filter((_, i) => i !== index));
+                        setPreviews((prev) => {
+                          const target = prev[index];
+                          if (target) URL.revokeObjectURL(target);
+                          return prev.filter((_, i) => i !== index);
+                        });
+                      }}
+                      className="absolute top-1 right-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white"
+                    >
+                      Remove
+                    </button>
                   </div>
                 ))}
               </div>
@@ -261,11 +382,13 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({ 
               disabled={isSubmitting}
               className="rounded-full bg-white/10 border border-white/20 px-5 py-2 text-sm font-semibold hover:bg-white/20 transition-colors disabled:opacity-60"
             >
-              {isSubmitting ? 'Uploading...' : 'Upload destination'}
+              {isSubmitting ? (mode === 'edit' ? 'Updating...' : 'Uploading...') : (mode === 'edit' ? 'Update destination' : 'Upload destination')}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

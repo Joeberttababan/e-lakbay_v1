@@ -168,8 +168,8 @@ export const DashboardDestinationSection: React.FC<DashboardDestinationSectionPr
           visibleDestinations.map((destination, index) => (
             <motion.div key={destination.id} {...getItemMotion(index)}>
               <DestinationModalCard
+                id={destination.id}
                 title={destination.name}
-                meta="Uploaded destination"
                 description={destination.description ?? ''}
                 imageUrl={destination.imageUrl ?? ''}
                 imageUrls={destination.imageUrls}
@@ -181,6 +181,7 @@ export const DashboardDestinationSection: React.FC<DashboardDestinationSectionPr
                 location={destination.location}
                 onRate={onRate ? () => onRate(destination.name) : undefined}
                 isCard={true}
+                showEditControl
               />
             </motion.div>
           ))

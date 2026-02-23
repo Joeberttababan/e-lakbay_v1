@@ -5,6 +5,7 @@ import { DestinationModalCard } from './DestinationModalCard';
 import type { LocationData } from '../lib/locationTypes';
 
 interface DestinationCardProps {
+  id?: string;
   title: string;
   description: string;
   imageUrl: string;
@@ -23,6 +24,7 @@ interface DestinationCardProps {
   onRate?: () => void;
   onClick?: () => void;
   onProfileClick?: (profileId: string) => void;
+  showEditControl?: boolean;
 }
 
 const formatRating = (ratingAvg?: number, ratingCount?: number) => {
@@ -36,6 +38,7 @@ const formatRating = (ratingAvg?: number, ratingCount?: number) => {
 };
 
 export const DestinationCard: React.FC<DestinationCardProps> = ({
+  id,
   title,
   description,
   imageUrl,
@@ -54,6 +57,7 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
   onRate,
   onClick,
   onProfileClick,
+  showEditControl = false,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -131,6 +135,7 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
               onClick={(event) => event.stopPropagation()}
             >
               <DestinationModalCard
+                id={id}
                 title={title}
                 description={description}
                 imageUrl={imageUrl}
@@ -143,6 +148,7 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
                 onRate={onRate}
                 onProfileClick={onProfileClick}
                 location={location}
+                showEditControl={showEditControl}
               />
             </div>
           </div>

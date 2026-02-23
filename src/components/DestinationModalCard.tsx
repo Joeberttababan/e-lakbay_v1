@@ -4,12 +4,15 @@ import {
   CloudDrizzle,
   CloudLightning,
   CloudRain,
+  Pencil,
   Snowflake,
   Star,
   Sun,
   Wind,
 } from 'lucide-react';
 import { Avatar } from './Avatar';
+import { useAuth } from './AuthProvider';
+import { DestinationUploadModal } from './DestinationUploadModal';
 import ViewRoutesModal from './ViewRoutesModal';
 import { DescriptionContainer } from './destination-modal/DescriptionContainer';
 import { FooterActionsContainer } from './destination-modal/FooterActionsContainer';
@@ -26,6 +29,7 @@ import {
 const preloadedDestinationGalleryKeys = new Set<string>();
 
 interface DestinationModalCardProps {
+  id?: string;
   title: string;
   description: string;
   imageUrl: string;
@@ -40,6 +44,7 @@ interface DestinationModalCardProps {
   onProfileClick?: (profileId: string) => void;
   location?: LocationData;
   isCard?: boolean;
+  showEditControl?: boolean;
 }
 
 const formatRating = (ratingAvg?: number, ratingCount?: number) => {
@@ -81,6 +86,7 @@ const toTitleCase = (value: string) =>
     .join(' ');
 
 export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
+  id,
   title,
   description,
   imageUrl,
@@ -95,7 +101,10 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   onProfileClick,
   location,
   isCard = false,
+  showEditControl = false,
 }) => {
+  const { user } = useAuth();
+  const canEdit = Boolean(showEditControl && id && user?.id && postedById && user.id === postedById);
   const formattedTitle = useMemo(() => toTitleCase(title), [title]);
   const images = useMemo(() => {
     if (imageUrls && imageUrls.length > 0) {
@@ -121,6 +130,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const [showRoutes, setShowRoutes] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const municipalityName = location?.municipality?.trim() ?? '';
   const hasLocation = Boolean(location && typeof location.lat === 'number' && typeof location.lng === 'number');
   const swipeStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
@@ -324,7 +334,18 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
           <span>{postedBy}</span>
         )}
       </div>
-      {meta && <span className="text-[10px] sm:text-xs text-white/50">{meta}</span>}
+      {canEdit ? (
+        <button
+          type="button"
+          onClick={() => setIsEditOpen(true)}
+          className="rounded-full bg-white/10 border border-white/20 p-2 text-white hover:bg-white/20 transition-colors"
+          aria-label="Open edit mode"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+      ) : (
+        meta && <span className="text-[10px] sm:text-xs text-white/50">{meta}</span>
+      )}
     </header>
   );
 
@@ -418,6 +439,22 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
       {footerActions}
       {showRoutes && location && (
         <ViewRoutesModal destination={location} onClose={() => setShowRoutes(false)} />
+      )}
+
+      {canEdit && (
+        <DestinationUploadModal
+          open={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          mode="edit"
+          destinationId={id}
+          initialData={{
+            name: title,
+            description,
+            imageUrl,
+            imageUrls,
+            location,
+          }}
+        />
       )}
     </article>
   );

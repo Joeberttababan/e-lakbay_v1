@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import GoogleMapReact from 'google-map-react';
 import type { LocationData } from '../lib/locationTypes';
 import { getBarangays, getMunicipalities } from '../lib/data/ilocosSurData';
@@ -23,7 +23,9 @@ const Pin: React.FC<PinProps> = () => (
 interface LocationPickerMapProps {
   onLocationConfirmed: (data: LocationData) => void;
   initialCenter?: { lat: number; lng: number };
+  initialLocation?: LocationData | null;
   hideIntro?: boolean;
+  defaultPinMapOpen?: boolean;
 }
 
 const toLocationData = (
@@ -41,9 +43,12 @@ const toLocationData = (
 const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   onLocationConfirmed,
   initialCenter,
+  initialLocation,
   hideIntro = false,
+  defaultPinMapOpen = false,
 }) => {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+  const initializedRef = useRef(false);
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
   const [municipality, setMunicipality] = useState('');
   const [barangay, setBarangay] = useState('');
@@ -61,6 +66,25 @@ const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   }, [center]);
 
   useEffect(() => {
+    if (!initialLocation) {
+      initializedRef.current = true;
+      return;
+    }
+
+    setMunicipality(initialLocation.municipality ?? '');
+    setBarangay(initialLocation.barangay ?? '');
+
+    if (typeof initialLocation.lat === 'number' && typeof initialLocation.lng === 'number') {
+      const coords = { lat: initialLocation.lat, lng: initialLocation.lng };
+      setPin(coords);
+      setMapCenter(coords);
+    }
+
+    initializedRef.current = true;
+  }, [initialLocation]);
+
+  useEffect(() => {
+    if (!initializedRef.current) return;
     onLocationConfirmed(toLocationData(pin, municipality, barangay));
   }, [pin, municipality, barangay, onLocationConfirmed]);
 
@@ -127,8 +151,9 @@ const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="text-xs text-white/60">Municipality / City</label>
+          <label htmlFor="location-municipality" className="text-xs text-white/60">Municipality / City</label>
           <select
+            id="location-municipality"
             value={municipality}
             onChange={(event) => handleMunicipalityChange(event.target.value)}
             className="mt-1 w-full rounded-lg bg-white/10 border border-white/15 px-3 py-2 text-xs text-white"
@@ -142,8 +167,9 @@ const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
           </select>
         </div>
         <div>
-          <label className="text-xs text-white/60">Barangay</label>
+          <label htmlFor="location-barangay" className="text-xs text-white/60">Barangay</label>
           <select
+            id="location-barangay"
             value={barangay}
             onChange={(event) => void handleBarangayChange(event.target.value)}
             disabled={!municipality}
@@ -159,7 +185,7 @@ const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
         </div>
       </div>
 
-      <Accordion type="single" collapsible defaultValue="pin-map">
+      <Accordion type="single" collapsible defaultValue={defaultPinMapOpen ? 'pin-map' : undefined}>
         <AccordionItem value="pin-map" className="border-white/10">
           <AccordionTrigger className="text-xs text-white/80">Pin map (optional)</AccordionTrigger>
           <AccordionContent>
