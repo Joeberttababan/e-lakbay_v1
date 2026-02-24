@@ -97,6 +97,11 @@ function buildMetadata(userRole?: string | null, extra?: Record<string, unknown>
   };
 }
 
+function isUuid(value?: string | null) {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 function getSessionId(): string {
   if (typeof window === 'undefined') return crypto.randomUUID();
   const existing = window.localStorage.getItem(SESSION_STORAGE_KEY);
@@ -229,12 +234,18 @@ export async function trackContentView({
   if (lastContentEventKey === eventKey) return;
   lastContentEventKey = eventKey;
 
+  const normalizedContentId = isUuid(contentId) ? contentId : null;
+  const destinationId = contentType === 'destination' ? normalizedContentId : null;
+  const productId = contentType === 'product' ? normalizedContentId : null;
+
   await insertEvent({
     session_id: getSessionId(),
     user_id: userId ?? null,
     event_name: 'page_view',
     page_path: pagePath ?? `modal:${contentType}:${contentId}`,
     landing_path: pagePath ?? null,
+    destination_id: destinationId,
+    product_id: productId,
     metadata: buildMetadata(userRole, {
       content_type: contentType,
       content_id: contentId,
