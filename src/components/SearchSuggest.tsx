@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { cn } from '../lib/utils';
+import { trackSearchPerformed } from '../lib/analytics';
+import { useAuth } from './AuthProvider';
 
 export interface SearchSuggestItem {
   id: string;
@@ -25,6 +27,7 @@ export const SearchSuggest: React.FC<SearchSuggestProps> = ({
   maxSuggestions = 6,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, profile } = useAuth();
 
   const suggestions = useMemo(() => {
     const query = value.trim().toLowerCase();
@@ -63,7 +66,17 @@ export const SearchSuggest: React.FC<SearchSuggestProps> = ({
                   type="button"
                   className="w-full text-left px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition"
                   onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => {
+                  onClick={async () => {
+                    // Fire analytics event only when a suggestion is clicked
+                    await trackSearchPerformed({
+                      query: value,
+                      scope: 'global', // or pass as prop if needed
+                      resultCount: suggestions.length,
+                      userId: user?.id ?? null,
+                      userRole: profile?.role ?? null,
+                      pagePath: window.location.pathname,
+                      filters: {},
+                    });
                     onChange(item.label);
                     setIsOpen(false);
                   }}
