@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 import { Button } from '../components/ui/button';
 import { Calendar } from '../components/ui/calendar';
 import { Skeleton } from '../components/ui/skeleton';
-import { Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { DateRange } from 'react-day-picker';
 
 type CountItem = {
@@ -101,7 +101,20 @@ export const DashboardAnalyticsSection: React.FC<DashboardAnalyticsSectionProps>
         p_start_date: customStartDate,
         p_end_date: customEndDate,
       });
-      if (error) throw error;
+      if (error) {
+        console.error('get_search_discovery_analytics RPC failed', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          params: {
+            p_days: selectedDays ?? 30,
+            p_start_date: customStartDate,
+            p_end_date: customEndDate,
+          },
+        });
+        throw error;
+      }
       return (data ?? {
         search_volume: 0,
         top_destinations: [],
@@ -119,7 +132,20 @@ export const DashboardAnalyticsSection: React.FC<DashboardAnalyticsSectionProps>
         p_start_date: customStartDate,
         p_end_date: customEndDate,
       });
-      if (error) throw error;
+      if (error) {
+        console.error('get_traffic_acquisition_analytics RPC failed', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          params: {
+            p_days: selectedDays ?? 30,
+            p_start_date: customStartDate,
+            p_end_date: customEndDate,
+          },
+        });
+        throw error;
+      }
       return (data ?? {
         sessions: 0,
         top_landing_pages: [],
@@ -130,9 +156,26 @@ export const DashboardAnalyticsSection: React.FC<DashboardAnalyticsSectionProps>
   });
 
   const searchVolume = searchDiscoveryData?.search_volume ?? 0;
-  const sessions = trafficData?.sessions ?? 0;
   const topLandingPages = (trafficData?.top_landing_pages ?? []).slice(0, 11);
-  const maxLandingSessions = topLandingPages.reduce((max, item) => Math.max(max, item.sessions), 0);
+  const totalTrafficAcquisitionSessions = (trafficData?.top_landing_pages ?? []).reduce(
+    (sum, item) => sum + (Number(item.sessions) || 0),
+    0,
+  );
+  const tealBarShades = ['#0f766e', '#0d9488', '#14b8a6', '#2dd4bf', '#0f766e', '#0d9488'];
+  const tealBarHighlights = ['#a7f3d0', '#99f6e4', '#7cefdc', '#5eead4', '#a7f3d0', '#99f6e4'];
+  const topLandingPagesWithFill = topLandingPages.map((item, index) => ({
+    ...item,
+    sessions: Number(item.sessions) || 0,
+    fill: item.label === 'Others' ? '#2dd4bf' : tealBarShades[index % tealBarShades.length],
+    highlight: item.label === 'Others' ? '#99f6e4' : tealBarHighlights[index % tealBarHighlights.length],
+    gradientId: `traffic-bar-gradient-${index}`,
+  }));
+  const chartLabelWidth = isMobile ? 58 : 84;
+  const removeTrafficPrefix = (value: string) => value.replace(/^(destination|product)\s*:\s*/i, '').trim();
+  const formatLandingLabel = (value: string) => {
+    const cleanedLabel = removeTrafficPrefix(value);
+    return cleanedLabel.split(/\s+/)[0] || cleanedLabel;
+  };
   const isLoading = isSearchDiscoveryPending || isTrafficPending;
 
   const getItemMotion = (index: number) =>
@@ -186,7 +229,7 @@ export const DashboardAnalyticsSection: React.FC<DashboardAnalyticsSectionProps>
       <div id="key-metrics" className="grid gap-4 sm:grid-cols-2">
         {
           [
-            { label: 'Sessions', value: sessions.toLocaleString() },
+            { label: 'Sessions', value: totalTrafficAcquisitionSessions.toLocaleString() },
             { label: 'Search Volume', value: searchVolume.toLocaleString() },
           ].map((stat, index) => (
             <motion.div
@@ -211,7 +254,7 @@ export const DashboardAnalyticsSection: React.FC<DashboardAnalyticsSectionProps>
         >
           <h2 className="text-lg font-semibold mb-4">Traffic & Acquisition</h2>
           <h3 className="text-sm text-muted-foreground mb-4">Most Visits (Top 10 + Others)</h3>
-          <div className="space-y-3">
+          <div>
             {isLoading ? (
               <ul className="space-y-3">{renderListSkeleton(8)}</ul>
             ) : topLandingPages.length === 0 ? (
@@ -219,37 +262,71 @@ export const DashboardAnalyticsSection: React.FC<DashboardAnalyticsSectionProps>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
-                  data={topLandingPages}
+                  data={topLandingPagesWithFill}
                   layout="vertical"
-                  margin={{ top: 5, right: 30, left: 200, bottom: 5 }}
+                  margin={{ top: 5, right: 1, left: -6, bottom: 5 }}
+                  barCategoryGap={0}
+                  barGap={0}
                 >
-                  <XAxis type="number" />
+                  <defs>
+                    {topLandingPagesWithFill.map((entry) => (
+                      <linearGradient
+                        key={entry.gradientId}
+                        id={entry.gradientId}
+                        x1="0"
+                        y1="0"
+                        x2="1"
+                        y2="0"
+                      >
+                        <stop offset="0%" stopColor={entry.highlight} />
+                        <stop offset="35%" stopColor="#2dd4bf" />
+                        <stop offset="100%" stopColor={entry.fill} />
+                      </linearGradient>
+                    ))}
+                  </defs>
+                  <XAxis type="number" hide />
                   <YAxis
                     dataKey="label"
                     type="category"
-                    width={190}
-                    tick={{ fontSize: 12 }}
+                    width={chartLabelWidth}
+                    tick={{ fontSize: 14, fill: '#ffffff' }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={2}
                     interval={0}
+                    tickFormatter={formatLandingLabel}
                   />
                   <Tooltip
-                    cursor={{ fill: 'rgba(20, 184, 166, 0.1)' }}
+                    cursor={false}
                     formatter={(value) => value}
-                    labelFormatter={(label) => `${label}`}
+                    labelFormatter={(label) => removeTrafficPrefix(String(label))}
+                    itemStyle={{ color: '#ffffff' }}
+                    labelStyle={{ color: '#ffffff' }}
                     contentStyle={{
                       backgroundColor: 'rgba(15, 23, 42, 0.9)',
                       border: '1px solid rgba(20, 184, 166, 0.3)',
                       borderRadius: '6px',
-                      color: '#fff',
+                      color: '#ffffff',
                     }}
                   />
                   <Bar
                     dataKey="sessions"
-                    fill={(entry) => {
-                      if (entry.label === 'Others') return '#cbd5e1';
-                      return '#14b8a6';
-                    }}
+                    fill="#14b8a6"
+                    fillOpacity={1}
+                    barSize={10}
                     radius={[0, 8, 8, 0]}
-                  />
+                  >
+                    {topLandingPagesWithFill.map((entry) => (
+                      <Cell
+                        key={`landing-page-${entry.label}`}
+                        fill={`url(#${entry.gradientId})`}
+                        fillOpacity={1}
+                        stroke={entry.fill}
+                        strokeWidth={1.2}
+                        strokeOpacity={1}
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             )}

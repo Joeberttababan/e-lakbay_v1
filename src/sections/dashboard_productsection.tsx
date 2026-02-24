@@ -52,7 +52,7 @@ export const DashboardProductSection: React.FC<DashboardProductSectionProps> = (
       try {
         let query = supabase
           .from('products')
-          .select('id, product_name, destination_name, description, image_url, image_urls, created_at, user_id, municipality, barangay, latitude, longitude, address')
+          .select('id, product_name, description, image_url, image_urls, created_at, user_id, municipality, barangay, latitude, longitude, address')
           .order('created_at', { ascending: false });
 
         if (userId) {
@@ -64,7 +64,7 @@ export const DashboardProductSection: React.FC<DashboardProductSectionProps> = (
         if (productError && userId && productError.message.toLowerCase().includes('user_id')) {
           const retry = await supabase
             .from('products')
-            .select('id, product_name, destination_name, description, image_url, image_urls, created_at, user_id, municipality, barangay, latitude, longitude, address')
+            .select('id, product_name, description, image_url, image_urls, created_at, user_id, municipality, barangay, latitude, longitude, address')
             .order('created_at', { ascending: false });
           productRows = retry.data ?? [];
           productError = retry.error ?? null;
