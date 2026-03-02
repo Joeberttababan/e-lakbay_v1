@@ -8,11 +8,9 @@ import DailyTouristsChart from './DailyTouristsChart';
 import {
   AnalyticsData,
   MunicipalityStats,
-  DailyTouristData,
   DateFilter,
   ContentTab,
   getDateCutoff,
-  generateDateRange,
 } from './types';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -111,35 +109,6 @@ async function fetchRatingsByUser(cutoff: string | null, contentTab: ContentTab)
   };
 }
 
-/**
- * Fetch daily new-tourist signups from profiles.
- */
-async function fetchDailyTourists(cutoff: string | null): Promise<DailyTouristData[]> {
-  let q = supabase
-    .from('profiles')
-    .select('created_at')
-    .eq('role', 'tourist')
-    .order('created_at', { ascending: true });
-  if (cutoff) q = q.gte('created_at', cutoff);
-
-  const { data, error } = await q;
-  if (error) {
-    console.error('[admin-analytics] daily tourists error', error);
-    return [];
-  }
-
-  const countByDate = new Map<string, number>();
-  for (const row of data ?? []) {
-    const dateStr = (row.created_at ?? '').slice(0, 10);
-    if (!dateStr) continue;
-    countByDate.set(dateStr, (countByDate.get(dateStr) ?? 0) + 1);
-  }
-
-  return Array.from(countByDate.entries())
-    .map(([date, count]) => ({ date, count }))
-    .sort((a, b) => a.date.localeCompare(b.date));
-}
-
 // ─── main component ───────────────────────────────────────────────────────────
 
 const AnalyticsTab: React.FC = () => {
@@ -166,13 +135,7 @@ const AnalyticsTab: React.FC = () => {
     queryFn: () => fetchRatingsByUser(cutoff, contentTab),
   });
 
-  // ── daily new tourists ──
-  const { data: rawDailyTourists, isPending: isDailyPending } = useQuery({
-    queryKey: ['admin-analytics', 'daily-tourists', dateFilter],
-    queryFn: () => fetchDailyTourists(cutoff),
-  });
-
-  const isLoading = isProfilesPending || isViewPending || isRatingsPending || isDailyPending;
+  const isLoading = isProfilesPending || isViewPending || isRatingsPending;
 
   // ── build per-municipality stats ──
   const analyticsData = useMemo<AnalyticsData>(() => {
@@ -233,23 +196,15 @@ const AnalyticsTab: React.FC = () => {
 
     municipalityStats.sort((a, b) => b.visits - a.visits || a.municipality.localeCompare(b.municipality));
 
-    // Daily tourists zero-fill
-    const dateRange = generateDateRange(dateFilter);
-    const rawMap = new Map((rawDailyTourists ?? []).map((d) => [d.date, d.count]));
-    const dailyTourists: DailyTouristData[] =
-      dateRange.length > 0
-        ? dateRange.map((date) => ({ date, count: rawMap.get(date) ?? 0 }))
-        : rawDailyTourists ?? [];
-
     return {
       totalVisits: grandVisits,
       totalQueries: grandQueries,
       totalRatings: ratingData?.totalCount ?? 0,
       avgRating: ratingData?.totalAvg ?? 0,
       municipalityStats,
-      dailyTourists,
+      dailyTourists: [],
     };
-  }, [muniProfiles, viewRows, contentTab, ratingData, rawDailyTourists, dateFilter]);
+  }, [muniProfiles, viewRows, contentTab, ratingData, dateFilter]);
 
   return (
     <motion.section
@@ -329,8 +284,8 @@ const AnalyticsTab: React.FC = () => {
       {/* Municipality breakdown */}
       <MunicipalityStatsTable loading={isLoading} stats={analyticsData.municipalityStats} />
 
-      {/* Daily tourists chart */}
-      <DailyTouristsChart loading={isLoading} data={analyticsData.dailyTourists} />
+      {/* Daily tourists chart – self-contained, fetches its own data */}
+      <DailyTouristsChart />
     </motion.section>
   );
 };
