@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { NavBar } from './components/NavBar';
 import { ModalProvider } from './components/ModalContext';
@@ -11,6 +11,7 @@ import { ProductsPage } from './pages/ProductsPage';
 import { SearchResultsPage } from './pages/SearchResultsPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
+import TouristProfileDashboard from './pages/TouristProfileDashboard';
 import NotFoundPage from './pages/NotFoundPage';
 import { SonnerGlobal } from './components/modern-ui/sonner';
 import Footer from './sections/footer';
@@ -39,11 +40,57 @@ const AdminRoute: React.FC = () => {
     );
   }
 
-  if (!user || profile?.role !== 'developer') {
+  if (!user || (profile?.role !== 'developer' && profile?.role !== 'admin')) {
     return <Navigate to="/" replace />;
   }
 
   return <AdminPage />;
+};
+
+// Route guard for municipality dashboard
+const MunicipalityRoute: React.FC = () => {
+  const { user, profile, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <p className="text-sm text-white/70">Loading...</p>
+      </main>
+    );
+  }
+
+  if (!user || profile?.role !== 'municipality') {
+    return <Navigate to="/" replace />;
+  }
+
+  return <DashboardPage profile={profile} />;
+};
+
+// Route guard for tourist profile dashboard
+const TouristRoute: React.FC = () => {
+  const { user, profile, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <p className="text-sm text-white/70">Loading...</p>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  // If user has a specific role that has its own dashboard, redirect there
+  if (profile?.role === 'admin' || profile?.role === 'developer') {
+    return <Navigate to="/admin" replace />;
+  }
+  if (profile?.role === 'municipality') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <TouristProfileDashboard />;
 };
 
 const AppContent: React.FC = () => {
@@ -52,10 +99,45 @@ const AppContent: React.FC = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isFooterVisible, setIsFooterVisible] = useState(false);
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
+  const [hasRedirectedOnLogin, setHasRedirectedOnLogin] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
   const scrollAttemptRef = useRef(0);
+
+  // Get the dashboard route based on user role
+  const getDashboardRoute = useCallback((role: string | null | undefined): string => {
+    if (role === 'admin' || role === 'developer') {
+      return '/admin';
+    }
+    if (role === 'municipality') {
+      return '/dashboard';
+    }
+    // Default to tourist profile dashboard
+    return '/tourist-dashboard';
+  }, []);
+
+  // Handle role-based redirection on login
+  useEffect(() => {
+    if (!loading && user && profile && !hasRedirectedOnLogin && location.pathname === '/') {
+      const targetRoute = getDashboardRoute(profile.role);
+      setHasRedirectedOnLogin(true);
+      navigate(targetRoute, { replace: true });
+    }
+  }, [loading, user, profile, hasRedirectedOnLogin, location.pathname, getDashboardRoute, navigate]);
+
+  // Reset redirect flag when user logs out
+  useEffect(() => {
+    if (!user) {
+      setHasRedirectedOnLogin(false);
+    }
+  }, [user]);
+
+  // Handle user button click in nav - navigate based on role
+  const handleUserDashboardClick = useCallback(() => {
+    const targetRoute = getDashboardRoute(profile?.role);
+    navigate(targetRoute);
+  }, [profile?.role, getDashboardRoute, navigate]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -157,7 +239,7 @@ const AppContent: React.FC = () => {
             onActiveChange={setActive}
             isAuthenticated={Boolean(user)}
             profile={profile}
-            onDashboard={() => navigate('/dashboard')}
+            onDashboard={handleUserDashboardClick}
             onLogout={signOut}
             onHome={() => navigate('/')}
             onJumpToSection={handleJumpToSection}
@@ -206,13 +288,17 @@ const AppContent: React.FC = () => {
             />
             <Route
               path="/dashboard"
-              element={user ? <DashboardPage profile={profile} /> : <Navigate to="/" replace />}
+              element={<MunicipalityRoute />}
+            />
+            <Route
+              path="/tourist-dashboard"
+              element={<TouristRoute />}
             />
             <Route path="/admin" element={<AdminRoute />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
-        {location.pathname !== '/dashboard' && location.pathname !== '/admin' && <Footer onOpenComingSoon={() => setIsComingSoonOpen(true)} />}
+        {location.pathname !== '/dashboard' && location.pathname !== '/admin' && location.pathname !== '/tourist-dashboard' && <Footer onOpenComingSoon={() => setIsComingSoonOpen(true)} />}
         <GlobalModal onModeChange={setActive} />
       </div>
       <SonnerGlobal />

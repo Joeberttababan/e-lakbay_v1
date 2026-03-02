@@ -29,6 +29,17 @@ create table public.analytics_events (
         ]
       )
     )
+  ),
+  constraint metadata_content_fields_required check (
+    (
+      (
+        (metadata ->> 'user_role'::text) is distinct from 'tourist'::text
+      )
+      or (
+        ((metadata ->> 'content_id'::text) is not null)
+        and ((metadata ->> 'content_type'::text) is not null)
+      )
+    )
   )
 ) TABLESPACE pg_default;
 
