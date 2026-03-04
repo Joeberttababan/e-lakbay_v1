@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLockBodyScroll } from '../lib/useLockBodyScroll';
 import { Star } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -13,6 +14,9 @@ export const RatingModal: React.FC<RatingModalProps> = ({ open, title, onClose, 
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // keep page from scrolling under the rating modal
+  useLockBodyScroll(open);
 
   useEffect(() => {
     if (!open) {
@@ -31,7 +35,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({ open, title, onClose, 
       onClick={onClose}
     >
       <div
-        className="glass-secondary modal-stone-text border border-white/20 rounded-2xl p-6 w-full max-w-lg max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar"
+        className="glass-secondary modal-stone-text border border-white/20 rounded-2xl p-6 w-full max-w-lg max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar overscroll-contain touch-pan-y"
         role="dialog"
         aria-modal="true"
         aria-labelledby="rating-modal-title"

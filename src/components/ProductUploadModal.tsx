@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLockBodyScroll } from '../lib/useLockBodyScroll';
 import { createPortal } from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
@@ -63,6 +64,9 @@ export const ProductUploadModal: React.FC<ProductUploadModalProps> = ({
   initialData,
   onSuccess,
 }) => {
+  // lock background when upload modal is open
+  useLockBodyScroll(open);
+
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [productName, setProductName] = useState('');
@@ -268,7 +272,7 @@ export const ProductUploadModal: React.FC<ProductUploadModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="glass-secondary modal-stone-text border border-white/20 rounded-2xl p-3 md:p-6 w-full max-w-4xl h-[85vh] md:h-[80vh] max-h-[85vh] md:max-h-[80vh] overflow-y-auto hide-scrollbar"
+        className="glass-secondary modal-stone-text border border-white/20 rounded-2xl p-3 md:p-6 w-full max-w-4xl h-[85vh] md:h-[80vh] max-h-[85vh] md:max-h-[80vh] overflow-y-auto hide-scrollbar overscroll-contain touch-pan-y"
         role="dialog"
         aria-modal="true"
         aria-labelledby="product-upload-title"

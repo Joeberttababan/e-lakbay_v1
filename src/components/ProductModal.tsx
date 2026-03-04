@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useLockBodyScroll } from '../lib/useLockBodyScroll';
 import { Pencil, Star } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { useAuth } from './AuthProvider';
@@ -8,6 +9,20 @@ import type { LocationData } from '../lib/locationTypes';
 import { preloadImageUrl } from '../lib/imagePreloadCache';
 
 const preloadedProductGalleryKeys = new Set<string>();
+
+const EMPTY_PRODUCT = {
+  id: '',
+  name: '',
+  imageUrl: '',
+  imageUrls: [] as string[],
+  description: null,
+  ratingAvg: 0,
+  ratingCount: 0,
+  uploaderName: '',
+  uploaderImageUrl: null,
+  uploaderId: null,
+  location: undefined as LocationData | undefined,
+};
 
 interface ProductModalProps {
   open: boolean;
@@ -47,20 +62,23 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   showEditControl = false,
   onEditRequest,
 }) => {
-  if (!open || !product) return null;
+  // lock body scroll for every modal render
+  useLockBodyScroll(open);
+
+  const safeProduct = product ?? EMPTY_PRODUCT;
 
   const { user } = useAuth();
   const [showRoutes, setShowRoutes] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [localProduct, setLocalProduct] = useState(product);
+  const [localProduct, setLocalProduct] = useState(safeProduct);
   const hasLocation = Boolean(localProduct.location && typeof localProduct.location.lat === 'number' && typeof localProduct.location.lng === 'number');
   const canEdit = Boolean(showEditControl && user?.id && localProduct.uploaderId && user.id === localProduct.uploaderId);
 
   const images = useMemo(() => {
     if (localProduct.imageUrls && localProduct.imageUrls.length > 0) {
-      return localProduct.imageUrls;
+      return localProduct.imageUrls.filter((url) => Boolean(url?.trim()));
     }
-    return [localProduct.imageUrl];
+    return localProduct.imageUrl?.trim() ? [localProduct.imageUrl] : [];
   }, [localProduct.imageUrl, localProduct.imageUrls]);
   const galleryKey = useMemo(() => images.join('|'), [images]);
 
@@ -79,7 +97,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   useEffect(() => {
     if (!open) return;
-    setLocalProduct(product);
+    setLocalProduct(product ?? EMPTY_PRODUCT);
     setActiveIndex(0);
     setSlideState(null);
     setOffsetPercent(0);
@@ -216,6 +234,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     }
   };
 
+  const activeImage = images[activeIndex] ?? null;
+  const slideFromImage = slideState ? (images[slideState.from] ?? null) : null;
+  const slideToImage = slideState ? (images[slideState.to] ?? null) : null;
+
+  if (!open || !product) return null;
+
   return (
     <>
       <div
@@ -247,13 +271,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   swipeStartRef.current = null;
                 }}
               >
-                <img
-                  src={images[activeIndex]}
-                  alt={localProduct.name}
-                  className={`h-64 sm:h-80 md:h-150 w-full object-contain ${slideState ? 'hidden' : ''}`}
-                  loading="eager"
-                  decoding="sync"
-                />
+                {activeImage && (
+                  <img
+                    src={activeImage}
+                    alt={localProduct.name}
+                    className={`h-64 sm:h-80 md:h-150 w-full object-contain ${slideState ? 'hidden' : ''}`}
+                    loading="eager"
+                    decoding="sync"
+                  />
+                )}
 
                 {slideState && (
                   <div
@@ -273,22 +299,26 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     }}
                   >
                     <div className="w-1/2">
-                      <img
-                        src={images[slideState.from]}
-                        alt={localProduct.name}
-                        className="h-64 sm:h-80 md:h-150 w-full object-contain"
-                        loading="eager"
-                        decoding="sync"
-                      />
+                      {slideFromImage && (
+                        <img
+                          src={slideFromImage}
+                          alt={localProduct.name}
+                          className="h-64 sm:h-80 md:h-150 w-full object-contain"
+                          loading="eager"
+                          decoding="sync"
+                        />
+                      )}
                     </div>
                     <div className="w-1/2">
-                      <img
-                        src={images[slideState.to]}
-                        alt={localProduct.name}
-                        className="h-64 sm:h-80 md:h-150 w-full object-contain"
-                        loading="eager"
-                        decoding="sync"
-                      />
+                      {slideToImage && (
+                        <img
+                          src={slideToImage}
+                          alt={localProduct.name}
+                          className="h-64 sm:h-80 md:h-150 w-full object-contain"
+                          loading="eager"
+                          decoding="sync"
+                        />
+                      )}
                     </div>
                   </div>
                 )}

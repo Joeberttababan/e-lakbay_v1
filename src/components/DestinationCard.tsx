@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLockBodyScroll } from '../lib/useLockBodyScroll';
 import { Star } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { DestinationModalCard } from './DestinationModalCard';
@@ -62,6 +63,7 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
   showEditControl = false,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  useLockBodyScroll(isModalOpen);
 
   const handleCardClick = () => {
     if (enableModal) {
@@ -131,7 +133,7 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({
             onClick={() => setIsModalOpen(false)}
           >
             <div
-              className="max-w-5xl w-full max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar"
+              className="max-w-5xl w-full max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar overscroll-contain touch-pan-y"
               role="dialog"
               aria-modal="true"
               aria-labelledby="destinations-modal"

@@ -257,6 +257,9 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({
 
   if (!open) return null;
 
+  // lock the document when the modal is open
+  useLockBodyScroll(open);
+
   const modalContent = (
     <div
       className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-4"
@@ -264,7 +267,7 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="glass-secondary modal-stone-text border border-white/20 rounded-2xl p-3 md:p-6 w-full max-w-4xl h-[85vh] md:h-[80vh] max-h-[85vh] md:max-h-[80vh] overflow-y-auto hide-scrollbar"
+        className="glass-secondary modal-stone-text border border-white/20 rounded-2xl p-3 md:p-6 w-full max-w-4xl h-[85vh] md:h-[80vh] max-h-[85vh] md:max-h-[80vh] overflow-y-auto hide-scrollbar overscroll-contain touch-pan-y"
         role="dialog"
         aria-modal="true"
         aria-labelledby="destination-upload-title"

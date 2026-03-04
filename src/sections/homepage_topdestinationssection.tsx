@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { SkeletonList, TopDestinationSkeleton } from '../components/ui/Skeletons';
 import { DestinationModalCard } from '../components/DestinationModalCard';
+import { useLockBodyScroll } from '../lib/useLockBodyScroll';
 import { RatingModal } from '../components/RatingModal';
 import { DestinationCard } from '../components/DestinationCard';
 import { useAuth } from '../components/AuthProvider';
@@ -61,6 +62,9 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
     };
   } | null>(null);
   const [ratingTarget, setRatingTarget] = useState<{ id: string; name: string } | null>(null);
+
+  // ensure body can't scroll while a destination modal is open
+  useLockBodyScroll(Boolean(activeDestination));
 
   const {
     data: destinations = [],
@@ -249,13 +253,14 @@ export const HomepageTopDestinationsSection: React.FC<HomepageTopDestinationsSec
       </div>
 
       {activeDestination && (
+        /* prevent body from scrolling while modal is shown */
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
           role="presentation"
           onClick={() => setActiveDestination(null)}
         >
           <div
-            className="max-w-5xl w-full max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar"
+            className="max-w-5xl w-full max-h-[85vh] md:max-h-none overflow-y-auto hide-scrollbar overscroll-contain touch-pan-y"
             role="dialog"
             aria-modal="true"
             aria-labelledby="top-destination-modal"

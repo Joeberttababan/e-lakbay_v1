@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLockBodyScroll } from '../lib/useLockBodyScroll';
 import { useModal } from './ModalContext';
 import { Button } from './modern-ui/button';
 import { useAuth } from './AuthProvider';
@@ -22,6 +23,9 @@ const initialFormState: AuthFormState = {
 
 export const GlobalModal: React.FC<GlobalModalProps> = ({ onModeChange }) => {
   const { open, type, closeModal, openModal } = useModal();
+
+  // prevent background from scrolling when auth modal is visible
+  useLockBodyScroll(open);
   const { signIn, signInWithGoogle, signUp } = useAuth();
   const [formState, setFormState] = useState<AuthFormState>(initialFormState);
   const [formError, setFormError] = useState<string | null>(null);
