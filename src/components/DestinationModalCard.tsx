@@ -482,7 +482,15 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
           commentCount={ratingCount}
         />
       )}
-      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar flex flex-col gap-2">
+      <div
+        className="flex-1 min-h-0 overflow-y-auto hide-scrollbar overscroll-contain touch-pan-y flex flex-col gap-2"
+        onWheelCapture={(event) => {
+          event.stopPropagation();
+        }}
+        onTouchMoveCapture={(event) => {
+          event.stopPropagation();
+        }}
+      >
         {headerSection}
         {mediaAndWeatherSection}
         {mobileDetailsToggle}

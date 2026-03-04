@@ -26,7 +26,7 @@ export const FooterActionsContainer: React.FC<FooterActionsContainerProps> = ({
           Rate
         </button>
       ) : (
-        <span className="text-[10px] sm:text-xs modal-stone-soft">...</span>
+        <span />
       )}
       <button
         type="button"
