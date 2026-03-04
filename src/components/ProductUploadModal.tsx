@@ -173,8 +173,9 @@ export const ProductUploadModal: React.FC<ProductUploadModalProps> = ({
       const imageUrls = files.length > 0
         ? [...fallbackImageUrls, ...(await uploadImages(files, `products/${productName.trim()}`))]
         : fallbackImageUrls;
+      // build payload matching the `products` table columns
       const basePayload = {
-        destination_name: locationData.address || `${locationData.barangay}, ${locationData.municipality}`,
+        // no "destination_name" field exists on products – using just product_name below
         product_name: productName.trim(),
         description: description.trim() || null,
         image_url: imageUrls[0] ?? null,
@@ -186,6 +187,7 @@ export const ProductUploadModal: React.FC<ProductUploadModalProps> = ({
         address: locationData.address,
       };
 
+      // include images array only when needed
       const payloadWithArray = {
         ...basePayload,
         image_urls: imageUrls,
@@ -248,6 +250,7 @@ export const ProductUploadModal: React.FC<ProductUploadModalProps> = ({
       onSuccess?.();
       onClose();
     } catch (uploadError) {
+      console.error('Product upload error:', uploadError);
       const message = uploadError instanceof Error ? uploadError.message : 'Upload failed. Please try again.';
       setError(message);
       toast.error(message);

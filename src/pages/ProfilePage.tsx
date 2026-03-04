@@ -333,6 +333,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
               visibleDestinations.map((destination, index) => (
                 <motion.div key={destination.id} {...getItemMotion(index)}>
                   <DestinationCard
+                    id={destination.id}
                     title={destination.name}
                     description={destination.description ?? 'A featured destination from Ilocos Sur.'}
                     imageUrl={destination.imageUrl ?? ''}
@@ -411,10 +412,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
         onClose={() => setDestinationRatingTarget(null)}
         onSubmit={async (rating, comment) => {
           if (!destinationRatingTarget) return;
+          if (!user) {
+            toast.error('You must be signed in to rate.');
+            return;
+          }
           try {
             const { error } = await supabase.from('destination_ratings').insert({
               destination_id: destinationRatingTarget.id,
-              user_id: profileId,
+              // use current authenticated user, not the profile being viewed
+              user_id: user.id,
               rating,
               comment: comment || null,
             });
@@ -458,10 +464,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ profileId, onBackHome 
         onClose={() => setProductRatingTarget(null)}
         onSubmit={async (rating, comment) => {
           if (!productRatingTarget) return;
+          if (!user) {
+            toast.error('You must be signed in to rate.');
+            return;
+          }
           try {
             const { error } = await supabase.from('product_ratings').insert({
               product_id: productRatingTarget.id,
-              user_id: profileId,
+              user_id: user.id,
               rating,
               comment: comment || null,
             });
