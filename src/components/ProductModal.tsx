@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLockBodyScroll } from '../lib/useLockBodyScroll';
-import { Pencil, Star } from 'lucide-react';
+import { Pencil, Star, Trash2 } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { useAuth } from './AuthProvider';
 import { CommentsSlider, CommentsToggleButton } from './CommentsSlider';
 import ViewRoutesModal from './ViewRoutesModal';
 import type { LocationData } from '../lib/locationTypes';
 import { preloadImageUrl } from '../lib/imagePreloadCache';
+import { supabase } from '../lib/supabaseClient';
+import { toast } from 'sonner';
 
 const preloadedProductGalleryKeys = new Set<string>();
 
@@ -67,9 +70,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   const safeProduct = product ?? EMPTY_PRODUCT;
 
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [showRoutes, setShowRoutes] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [localProduct, setLocalProduct] = useState(safeProduct);
   const hasLocation = Boolean(localProduct.location && typeof localProduct.location.lat === 'number' && typeof localProduct.location.lng === 'number');
   const canEdit = Boolean(showEditControl && user?.id && localProduct.uploaderId && user.id === localProduct.uploaderId);
@@ -396,24 +401,59 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                       <span className="modal-stone-muted">{formatRating(localProduct.ratingAvg, localProduct.ratingCount)}</span>
                     </div>
                     {canEdit && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onClose();
-                          onEditRequest?.({
-                            id: localProduct.id,
-                            name: localProduct.name,
-                            imageUrl: localProduct.imageUrl,
-                            imageUrls: localProduct.imageUrls,
-                            description: localProduct.description,
-                            location: localProduct.location,
-                          });
-                        }}
-                        className="rounded-full bg-white/10 border border-white/20 p-2 text-white hover:bg-white/20 transition-colors"
-                        aria-label="Open edit mode"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            onEditRequest?.({
+                              id: localProduct.id,
+                              name: localProduct.name,
+                              imageUrl: localProduct.imageUrl,
+                              imageUrls: localProduct.imageUrls,
+                              description: localProduct.description,
+                              location: localProduct.location,
+                            });
+                          }}
+                          className="rounded-full bg-white/10 border border-white/20 p-2 text-white hover:bg-white/20 transition-colors"
+                          aria-label="Open edit mode"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isDeleting}
+                          onClick={async () => {
+                            if (!localProduct.id || !user?.id || isDeleting) return;
+                            const confirmed = window.confirm('Delete this product permanently?');
+                            if (!confirmed) return;
+
+                            setIsDeleting(true);
+                            try {
+                              const { error } = await supabase
+                                .from('products')
+                                .delete()
+                                .eq('id', localProduct.id)
+                                .eq('user_id', user.id);
+
+                              if (error) throw error;
+
+                              await queryClient.invalidateQueries({ queryKey: ['products'] });
+                              toast.success('Product deleted.');
+                              onClose();
+                            } catch (error) {
+                              const message = error instanceof Error ? error.message : 'Failed to delete product.';
+                              toast.error(message);
+                            } finally {
+                              setIsDeleting(false);
+                            }
+                          }}
+                          className="rounded-full bg-white/10 border border-white/20 p-2 text-white hover:bg-white/20 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                          aria-label="Delete product"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>

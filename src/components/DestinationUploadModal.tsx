@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { useLockBodyScroll } from '../lib/useLockBodyScroll';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthProvider';
 import LocationPickerMap from './LocationPickerMap';
@@ -255,10 +256,10 @@ export const DestinationUploadModal: React.FC<DestinationUploadModalProps> = ({
     }
   };
 
-  if (!open) return null;
-
   // lock the document when the modal is open
   useLockBodyScroll(open);
+
+  if (!open) return null;
 
   const modalContent = (
     <div

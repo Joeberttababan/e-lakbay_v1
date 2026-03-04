@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Cloud,
   CloudDrizzle,
@@ -8,6 +9,7 @@ import {
   Snowflake,
   Star,
   Sun,
+  Trash2,
   Wind,
 } from 'lucide-react';
 import { Avatar } from './Avatar';
@@ -21,11 +23,13 @@ import { ImageGalleryContainer } from './destination-modal/ImageGalleryContainer
 import { WeatherContainer } from './destination-modal/WeatherContainer';
 import type { LocationData } from '../lib/locationTypes';
 import { preloadImageUrl } from '../lib/imagePreloadCache';
+import { supabase } from '../lib/supabaseClient';
 import {
   fetchCurrentWeather,
   fetchCurrentWeatherByMunicipality,
   type CurrentWeatherData,
 } from '../lib/weather';
+import { toast } from 'sonner';
 
 const preloadedDestinationGalleryKeys = new Set<string>();
 
@@ -104,6 +108,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   isCard = false,
   showEditControl = false,
 }) => {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const canEdit = Boolean(showEditControl && id && user?.id && postedById && user.id === postedById);
   const formattedTitle = useMemo(() => toTitleCase(title), [title]);
@@ -132,6 +137,7 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const [showRoutes, setShowRoutes] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const municipalityName = location?.municipality?.trim() ?? '';
   const hasLocation = Boolean(location && typeof location.lat === 'number' && typeof location.lng === 'number');
@@ -337,14 +343,51 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
         )}
       </div>
       {canEdit ? (
-        <button
-          type="button"
-          onClick={() => setIsEditOpen(true)}
-          className="rounded-full bg-white/10 border border-white/20 p-2 text-white hover:bg-white/20 transition-colors"
-          aria-label="Open edit mode"
-        >
-          <Pencil className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsEditOpen(true)}
+            className="rounded-full bg-white/10 border border-white/20 p-2 text-white hover:bg-white/20 transition-colors"
+            aria-label="Open edit mode"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            disabled={isDeleting}
+            onClick={async () => {
+              if (!id || !user?.id || isDeleting) return;
+              const confirmed = window.confirm('Delete this destination permanently?');
+              if (!confirmed) return;
+
+              setIsDeleting(true);
+              try {
+                const { error } = await supabase
+                  .from('destinations')
+                  .delete()
+                  .eq('id', id)
+                  .eq('user_id', user.id);
+
+                if (error) throw error;
+
+                await Promise.all([
+                  queryClient.invalidateQueries({ queryKey: ['destinations'] }),
+                  queryClient.invalidateQueries({ queryKey: ['destinations', 'top'] }),
+                ]);
+                toast.success('Destination deleted.');
+              } catch (error) {
+                const message = error instanceof Error ? error.message : 'Failed to delete destination.';
+                toast.error(message);
+              } finally {
+                setIsDeleting(false);
+              }
+            }}
+            className="rounded-full bg-white/10 border border-white/20 p-2 text-white hover:bg-white/20 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            aria-label="Delete destination"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       ) : (
         meta && <span className="text-[10px] sm:text-xs text-white/50">{meta}</span>
       )}
@@ -432,8 +475,8 @@ export const DestinationModalCard: React.FC<DestinationModalCardProps> = ({
 
   return (
     <article className={`relative glass-secondary modal-stone-text border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col w-full overflow-hidden ${isCard ? 'h-[60vh]' : 'h-[65vh] sm:h-[55vh] md:h-[75vh] lg:h-[65vh]'}`}>
-      {/* Comments toggle button on right edge - only show when not a card and slider is closed */}
-      {!isCard && id && !showComments && (
+      {/* Comments toggle button on right edge */}
+      {id && !showComments && (
         <CommentsToggleButton
           onClick={() => setShowComments(true)}
           commentCount={ratingCount}
