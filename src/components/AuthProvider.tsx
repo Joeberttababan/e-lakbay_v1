@@ -25,6 +25,7 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const POST_LOGIN_REDIRECT_KEY = 'post_login_redirect';
 
 const fetchProfile = async (userId: string) => {
   const { data, error, status } = await supabase
@@ -188,11 +189,19 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       return error.message;
     }
 
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(POST_LOGIN_REDIRECT_KEY, '1');
+    }
+
     toast.success('Welcome back!');
     return null;
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(POST_LOGIN_REDIRECT_KEY, '1');
+    }
+
     const redirectTo = window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -200,6 +209,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     });
 
     if (error) {
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
+      }
       toast.error(error.message);
       return error.message;
     }
@@ -221,6 +233,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     if (error) {
       toast.error(error.message);
       return error.message;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(POST_LOGIN_REDIRECT_KEY, '1');
     }
 
     const userId = data.user?.id;
@@ -254,6 +270,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     setLoading(true);
     setUser(null);
     setProfile(null);
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
+    }
     try {
       await supabase.auth.signOut();
       toast.success('Signed out successfully.');

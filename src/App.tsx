@@ -19,6 +19,8 @@ import ComingSoonModal from './components/ui/coming_soon';
 import loadingVideo from './assets/Loading_chatbot.webm';
 import { initializeAnalyticsSession } from './lib/analytics';
 
+const POST_LOGIN_REDIRECT_KEY = 'post_login_redirect';
+
 const ProfileRoute: React.FC<{ onBackHome: () => void }> = ({ onBackHome }) => {
   const { profileId } = useParams();
 
@@ -99,7 +101,6 @@ const AppContent: React.FC = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isFooterVisible, setIsFooterVisible] = useState(false);
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
-  const [hasRedirectedOnLogin, setHasRedirectedOnLogin] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
@@ -117,21 +118,20 @@ const AppContent: React.FC = () => {
     return '/tourist-dashboard';
   }, []);
 
-  // Handle role-based redirection on login
   useEffect(() => {
-    if (!loading && user && profile && !hasRedirectedOnLogin && location.pathname === '/') {
-      const targetRoute = getDashboardRoute(profile.role);
-      setHasRedirectedOnLogin(true);
+    if (typeof window === 'undefined') return;
+    if (loading || !user || !profile) return;
+
+    const shouldRedirect = window.sessionStorage.getItem(POST_LOGIN_REDIRECT_KEY) === '1';
+    if (!shouldRedirect) return;
+
+    const targetRoute = getDashboardRoute(profile.role);
+    window.sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
+
+    if (location.pathname !== targetRoute) {
       navigate(targetRoute, { replace: true });
     }
-  }, [loading, user, profile, hasRedirectedOnLogin, location.pathname, getDashboardRoute, navigate]);
-
-  // Reset redirect flag when user logs out
-  useEffect(() => {
-    if (!user) {
-      setHasRedirectedOnLogin(false);
-    }
-  }, [user]);
+  }, [loading, user, profile, location.pathname, getDashboardRoute, navigate]);
 
   // Handle user button click in nav - navigate based on role
   const handleUserDashboardClick = useCallback(() => {
